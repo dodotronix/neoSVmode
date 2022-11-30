@@ -58,19 +58,24 @@ local asterisk_instances = vim.treesitter.parse_query(
   (simple_identifier) @inst_name
   (hierarchical_instance 
     (list_of_port_connections 
-      (named_port_connection) @port_name 
-      (#eq? @port_name ".*")
-    )))
+      (named_port_connection) @asterisk 
+      (#eq? @asterisk ".*"))@port_map
+))
 ]])
 
-local added_comments = vim.treesitter.parse_query(
+local portmap_check = vim.treesitter.parse_query(
 "verilog",
 [[
-(module_instantiation
-  (hierarchical_instance
-    (comment) @port_comment 
-    (#match? @port_comment "\/\/\\s*__.*__"))) @port_comments
+(named_port_connection 
+  (port_identifier 
+    (simple_identifier) @port_name)*
+  (expression 
+    (_ (simple_identifier) @connector))*
+
+)@port_complete 
+(comment) @comment
 ]])
+
 
 local get_root = function (bufnr)
     local parser = vim.treesitter.get_parser(bufnr, "verilog", {})
@@ -173,14 +178,14 @@ M.unfold = function ()
         local group = asterisk_instances.captures[id]
         if(group == "inst_name") then
             name = vim.treesitter.get_node_text(node, bufnr, {})
-        else
+        elseif(group == "asterisk" ) then
             local range = { node:range() }
             table.insert(found_instances, 1, {
                 name = name,
                 start = range[1],
                 stop = range[3]+1})
+            end
         end
-    end
 
     for i, tab in pairs(found_instances) do
         local asterisk_line = api.nvim_buf_get_lines(bufnr, tab.start, tab.start+1, false)[1]
@@ -194,13 +199,60 @@ M.unfold = function ()
     end
 end
 
+local get_folded_portmap = function (root, bufnr)
+
+    local portmap = {}
+
+    for id, node in portmap_check:iter_captures(root, bufnr, 0, -1) do
+        local group = portmap_check.captures[id]
+        local txt = vim.treesitter.get_node_text(node, bufnr, {})
+        if(txt == ".*") then
+            break
+        else
+            if (group == "port_complete") then
+                table.insert(portmap, 1, {
+                    definition = txt,
+                    port_name = "",
+                    line_number = node:range(),
+                    connector = "",
+                    comment = ""})
+            else
+                portmap[1][group] = txt
+            end
+        end
+    end
+    return portmap
+end
+
 M.fold = function ()
     local name
     local bufnr = api.nvim_get_current_buf()
     local root = get_root(bufnr)
     local modules = get_module_table()
+    local new_portmap = {}
 
-
+    for id, node in asterisk_instances:iter_captures(root, bufnr, 0, -1) do
+        local group = asterisk_instances.captures[id]
+        if(group == "inst_name") then
+            name = vim.treesitter.get_node_text(node, bufnr, {})
+        elseif(group == "port_map" ) then
+            local connections = get_folded_portmap(node, bufnr)
+            local module_def = modules[name]
+            -- check if the ports from current buffer corespond 
+            -- to the found ports in the module definitions
+            -- TODO check for duplicates
+            for i, c in pairs(connections) do
+                print(c.port_name)
+                for _, d in pairs(module_def) do
+                    if(d.name == c.port_name) then
+                        table.insert(new_portmap, 1, c)
+                        break
+                    end
+                end
+            end
+            P(new_portmap)
+        end
+    end
 end
 
 command('NeoUnfold', M.unfold, {})
