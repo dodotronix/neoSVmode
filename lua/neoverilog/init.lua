@@ -89,7 +89,6 @@ end
 
 local find_modules = function()
     local hdl_paths = {}
-    local found_defintions = {}
     local test = require'plenary.scandir'
     local filetype = require'plenary.filetype'
     local dirs = test.scan_dir(".", {hidden = false, depth = nil})
@@ -150,55 +149,6 @@ local get_module_table = function ()
     return portmaps
 end
 
-local create_port_map = function (pre, port_table, post)
-    local result = {pre}
-    for i, tab in pairs(port_table) do
-        local separator = ","
-        if(i == #port_table) then
-            separator = ""
-        end
-        table.insert(result,
-        string.format(".%s(%s)%s", tab.name, tab.name, separator))
-    end
-
-    result[#result+1] = post
-    return result
-end
-
-local M = {}
-
-M.unfold = function ()
-    local name
-    local bufnr = api.nvim_get_current_buf()
-    local root = get_root(bufnr)
-    local modules = get_module_table()
-    local found_instances = {}
-
-    for id, node in asterisk_instances:iter_captures(root, bufnr, 0, -1) do
-        local group = asterisk_instances.captures[id]
-        if(group == "inst_name") then
-            name = vim.treesitter.get_node_text(node, bufnr, {})
-        elseif(group == "asterisk" ) then
-            local range = { node:range() }
-            table.insert(found_instances, 1, {
-                name = name,
-                start = range[1],
-                stop = range[3]+1})
-            end
-        end
-
-    for i, tab in pairs(found_instances) do
-        local asterisk_line = api.nvim_buf_get_lines(bufnr, tab.start, tab.start+1, false)[1]
-        local line_ending = vim.fn.substitute(asterisk_line, '.*\\.\\*\\(.*\\)', '\\1', '')
-        local unfolded = create_port_map(".*,", modules[tab.name], line_ending)
-        found_instances[i].port = unfolded
-    end
-
-    for _, f in ipairs(found_instances) do
-        api.nvim_buf_set_lines(bufnr, f.start, f.stop, false, f.port)
-    end
-end
-
 local get_folded_portmap = function (root, bufnr)
 
     local portmap = {}
@@ -224,7 +174,22 @@ local get_folded_portmap = function (root, bufnr)
     return portmap
 end
 
-M.fold = function ()
+local create_port_map = function (pre, port_table)
+    local result = {pre}
+    for i, tab in pairs(port_table) do
+        local separator = ","
+        if(i == #port_table) then
+            separator = ""
+        end
+        table.insert(result,
+        string.format(".%s(%s)%s", tab.name, tab.name, separator))
+    end
+    return result
+end
+
+local M = {}
+
+M.unfold = function ()
     local name
     local bufnr = api.nvim_get_current_buf()
     local root = get_root(bufnr)
@@ -238,20 +203,93 @@ M.fold = function ()
         elseif(group == "port_map" ) then
             local connections = get_folded_portmap(node, bufnr)
             local module_def = modules[name]
+
+            local range = { node:range() }
+            table.insert(new_portmap, 1, {
+                start_row = range[1],
+                stop_row = range[3],
+                start_col = range[2],
+                stop_col = range[4]
+            })
             -- check if the ports from current buffer corespond 
             -- to the found ports in the module definitions
-            -- TODO check for duplicates
-            for i, c in pairs(connections) do
-                print(c.port_name)
-                for _, d in pairs(module_def) do
+            local ports = {}
+            local modul_remaining_ports
+            for _, c in pairs(connections) do
+                for i, d in pairs(module_def) do
                     if(d.name == c.port_name) then
-                        table.insert(new_portmap, 1, c)
+                        -- TODO check for duplicates (maybe in the future)
+                        -- need to add comma at the end of port
+                        table.insert(ports, string.format("%s,", c.definition))
+                        -- table.remove(module_def, i)
                         break
                     end
                 end
             end
-            P(new_portmap)
+            -- add .* at the end of the portmap
+            -- merge unfolded portmap part with manualy assigned ports
+            local pmap =  create_port_map(".*,", module_def)
+            for _, p in ipairs(pmap) do
+                ports[#ports+1] = p
+            end
+
+            new_portmap[1].txt = ports
         end
+    end
+
+    for _, f in ipairs(new_portmap) do
+        api.nvim_buf_set_text(bufnr, f.start_row, f.start_col,
+                              f.stop_row, f.stop_col, f.txt)
+    end
+end
+
+
+M.fold = function ()
+    local name
+    local bufnr = api.nvim_get_current_buf()
+    local root = get_root(bufnr)
+    local modules = get_module_table()
+    local new_portmap = {}
+
+    for id, node in asterisk_instances:iter_captures(root, bufnr, 0, -1) do
+        local group = asterisk_instances.captures[id]
+        if(group == "inst_name") then
+            name = vim.treesitter.get_node_text(node, bufnr, {})
+        elseif(group == "port_map" ) then
+            --[[ local test = vim.treesitter.get_node_text(node, bufnr, {})
+            print(test) ]]
+            local connections = get_folded_portmap(node, bufnr)
+            local module_def = modules[name]
+            P(connections)
+
+            local range = { node:range() }
+            table.insert(new_portmap, 1, {
+                txt = {},
+                start_row = range[1],
+                stop_row = range[3],
+                start_col = range[2],
+                stop_col = range[4]
+            })
+            -- check if the ports from current buffer corespond 
+            -- to the found ports in the module definitions
+            for i, c in pairs(connections) do
+                for _, d in pairs(module_def) do
+                    if(d.name == c.port_name) then
+                        -- need to add comma at the end of port
+                        table.insert(new_portmap[1].txt, string.format("%s,", c.definition))
+                        -- TODO check for duplicates (maybe in the future)
+                        break
+                    end
+                end
+            end
+            -- add .* at the end new_portmapof the portmap
+            table.insert(new_portmap[1].txt, ".*")
+        end
+    end
+
+    for _, f in ipairs(new_portmap) do
+        api.nvim_buf_set_text(bufnr, f.start_row, f.start_col,
+                              f.stop_row, f.stop_col, f.txt)
     end
 end
 
