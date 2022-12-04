@@ -127,6 +127,21 @@ local get_port_table = function (module_parser, module_content)
     return port_map_table
 end
 
+local copy_port_table = function (module_table, name)
+    local copy = {}
+    local module_portmap = module_table[name]
+
+    for _, port in ipairs(module_portmap) do
+        local port_table = {}
+        for k, v in pairs(port) do
+            port_table[k] = v
+        end
+        table.insert(copy, port_table)
+    end
+
+    return copy
+end
+
 local get_module_table = function ()
 
     local hdl_paths = find_modules()
@@ -202,7 +217,7 @@ M.unfold = function ()
             name = vim.treesitter.get_node_text(node, bufnr, {})
         elseif(group == "port_map" ) then
             local connections = get_folded_portmap(node, bufnr)
-            local module_def = modules[name]
+            local module_def = copy_port_table(modules, name)
 
             local range = { node:range() }
             table.insert(new_portmap, 1, {
@@ -221,7 +236,7 @@ M.unfold = function ()
                         -- TODO check for duplicates (maybe in the future)
                         -- need to add comma at the end of port
                         table.insert(ports, string.format("%s,", c.definition))
-                        -- table.remove(module_def, i)
+                        table.remove(module_def, i)
                         break
                     end
                 end
