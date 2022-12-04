@@ -1,6 +1,5 @@
 --
 -- TODO remove non-existing ports in the portmaps above the .*
--- TODO remove all lines behind the .* until );
 -- TODO align placed portmaps refering to the verilog alignment rules
 -- TODO detect all places with /*AUTOWIRE*/, /*AUTOAREGINPUT*/ 
 -- TODO create signals declarations 
@@ -77,12 +76,40 @@ local portmap_check = vim.treesitter.parse_query(
 ]])
 
 
+-- NOTE This is intended to be compatible with emacs verilog-mode
+-- not all the macros are supported yet and some off them are not
+-- priority so they have not been included yet
+local neoverilog_macros = vim.treesitter.parse_query(
+"verilog",
+[[
+((comment) @autowire 
+ (#match? @autowire "\\/\\*AUTOWIRE\\*\\/")) 
+((comment) @autooutput 
+ (#match? @autooutput "\\/\\*AUTOOUTPUT\\*\\/")) 
+((comment) @autoinput 
+ (#match? @autoinput "\\/\\*AUTOINPUT\\*\\/")) 
+((comment) @autoinst 
+ (#match? @autoinst "\\/\\*AUTOINST\\*\\/")) 
+((comment) @autoinstparam 
+ (#match? @autoinstparam "\\/\\*AUTOPARAM\\*\\/")) 
+((comment) @autoinputreg 
+ (#match? @autoinputreg "\\/\\*AUTOINPUTREG\\*\\/")) 
+((comment) @autounused
+ (#match? @autounused "\\/\\*AUTOUNUSED\\*\\/")) 
+(((comment) @pre_comment
+(#eq? @pre_comment "// Beginning of automatic wires (for undeclared instantiated-module outputs)"))
+(_) 
+((comment) @post_comment 
+(#eq? @post_comment "// End of automatics")))
+]])
+
 local get_root = function (bufnr)
     local parser = vim.treesitter.get_parser(bufnr, "verilog", {})
     local tree = parser:parse()[1]
     return tree:root()
 end
 
+-- TODO need to find the way what would be the reference for alignment
 local align = function ()
     print("alignment")
 end
@@ -308,7 +335,43 @@ M.fold = function ()
     end
 end
 
+
+-- TODO create list of variable definitions 
+-- and put the in the test file
+M.write_signals = function ()
+    local bufnr = api.nvim_get_current_buf()
+    local root = get_root(bufnr)
+    local macro_positions = {}
+    local macro_name
+
+    for id, node in neoverilog_macros:iter_captures(root, bufnr, 0, -1) do
+        local group = neoverilog_macros.captures[id]
+        local range = { node:range() }
+        if (group == "post_comment") then
+            macro_positions[macro_name].stop_row = range[3]
+            macro_positions[macro_name].stop_col = range[4]
+        else
+            macro_name = group
+            macro_positions[macro_name] = {}
+            macro_positions[macro_name].start_row = range[1]
+            macro_positions[macro_name].start_col = range[2]
+            macro_positions[macro_name].stop_row = range[3]
+            macro_positions[macro_name].stop_col = range[4]
+        end
+    end
+
+    -- this is just a TEST
+    -- try to remove the variable definitions based on the
+    --[[ for _, f in pairs(macro_positions) do
+        api.nvim_buf_set_text(bufnr, f.start_row, f.start_col,
+        f.stop_row, f.stop_col, {})
+    end ]]
+
+end
+
+
 command('NeoUnfold', M.unfold, {})
 command('NeoFold', M.fold, {})
+command('NeoVars', M.write_signals, {})
 
 return M
