@@ -1,7 +1,5 @@
 --
--- TODO remove non-existing ports in the portmaps above the .*
 -- TODO align placed portmaps refering to the verilog alignment rules
--- TODO detect all places with /*AUTOWIRE*/, /*AUTOAREGINPUT*/ 
 -- TODO create signals declarations 
 -- TODO place the signal declarations within the 
 -- {// Beginning of automatic wires (for undeclared instantiated-module outputs)}
