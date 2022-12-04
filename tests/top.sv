@@ -9,17 +9,21 @@ module top #(parameter int TEST=32,
     output logic [7:0] data);
 
     localparam test = 10;
-    logic [7:0] cnt;
     logic sw_toggle;
 
-    /*AUTOWIRE*/
+   /*AUTOWIRE*/
+   // Beginning of automatic wires (for undeclared instantiated-module outputs)
+    logic [7:0] cnt;
+   // End of automatics
+   
+    /*AUTOOUTPUT*/
+    // logic
 
     clock_enable #(.RATIO(10)) u_clken (
-        .this_is(), // this is created by ...
-        .*);
+        .o_en(o_en),
+.*);
 
     clock_enable #(.RATIO(10)) u_clken1 (
-        .this_is(), // this is created by ...
         .*);
 
     always_ff @(posedge clk) begin
