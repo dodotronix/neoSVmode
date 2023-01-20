@@ -1,9 +1,7 @@
 --
--- TODO align placed portmaps refering to the verilog alignment rules
--- TODO create signals declarations 
--- TODO place the signal declarations within the 
--- {// Beginning of automatic wires (for undeclared instantiated-module outputs)}
--- {// End of automatics}
+-- TODO fixe alignment
+-- TODO remove variable duplicates 
+-- TODO rewrite the code to be better organized
 
 local api = vim.api
 local command = api.nvim_create_user_command
@@ -101,15 +99,30 @@ local neoverilog_macros = vim.treesitter.parse_query(
 (#eq? @post_comment "// End of automatics")))
 ]])
 
+local INDENT_PATTERN = '^%s+'
+
+local function get_indents(lines)
+  local indents = vim.tbl_map(function(line)
+    local indent = line:match(INDENT_PATTERN)
+    return indent and #indent or 0
+  end, lines)
+  -- Dont skip first line indentation
+  indents[1] = 0
+  return indents
+end
+
 local get_root = function (bufnr)
     local parser = vim.treesitter.get_parser(bufnr, "verilog", {})
     local tree = parser:parse()[1]
     return tree:root()
 end
 
--- TODO need to find the way what would be the reference for alignment
-local align = function ()
-    print("alignment")
+local get_indent = function(indent)
+    local spaces = ''
+    for i = 0, indent do
+       spaces = string.format('%s%s', spaces, ' ')
+    end
+    return spaces
 end
 
 local find_modules = function()
@@ -167,6 +180,43 @@ local copy_port_table = function (module_table, name)
     return copy
 end
 
+-- TODO create list of variable definitions 
+-- and put the in the test file
+local get_macro_locations = function ()
+    local bufnr = api.nvim_get_current_buf()
+    local root = get_root(bufnr)
+    local macro_positions = {}
+    local macro_name
+
+    for id, node in neoverilog_macros:iter_captures(root, bufnr, 0, -1) do
+        local group = neoverilog_macros.captures[id]
+        local range = { node:range() }
+        if (group == "post_comment") then
+            macro_positions[macro_name].stop_row = range[3]
+            macro_positions[macro_name].stop_col = range[4]
+        elseif (group == "pre_comment") then
+            macro_positions[macro_name].start_row = range[1]
+            macro_positions[macro_name].start_col = range[2]
+        else
+            macro_name = group
+            macro_positions[macro_name] = {}
+            macro_positions[macro_name].start_row = range[1]+1
+            macro_positions[macro_name].start_col = range[2]
+            macro_positions[macro_name].stop_row = range[1]+1
+            macro_positions[macro_name].stop_col = range[2]
+        end
+    end
+
+    -- this is just a TEST
+    -- try to remove the variable definitions based on the
+    --[[ for _, f in pairs(macro_positions) do
+        api.nvim_buf_set_text(bufnr, f.start_row, f.start_col,
+        f.stop_row, f.stop_col, {})
+    end ]]
+
+    return macro_positions
+end
+
 local get_module_table = function ()
 
     local hdl_paths = find_modules()
@@ -214,37 +264,48 @@ local get_folded_portmap = function (root, bufnr)
     return portmap
 end
 
-local create_port_map = function (pre, port_table)
-    local result = {pre}
+local create_port_map = function (pre, port_table, result, indent)
+    result[#result+1] = string.format("%s%s", align, pre)
     for i, tab in pairs(port_table) do
         local separator = ","
         if(i == #port_table) then
             separator = ""
         end
         table.insert(result,
-        string.format(".%s(%s)%s", tab.name, tab.name, separator))
+        string.format("%s.%s(%s)%s", indent, tab.name, tab.name, separator))
     end
-    return result
+end
+
+local create_var_defs = function (result, port_table, indent)
+    for _, tab in pairs(port_table) do
+        table.insert(result,
+        string.format("%s%s %s;", indent, tab.datatype, tab.name))
+    end
 end
 
 local M = {}
 
 M.unfold = function ()
-    local name
+    local name, offset, port_indent
     local bufnr = api.nvim_get_current_buf()
     local root = get_root(bufnr)
     local modules = get_module_table()
     local new_portmap = {}
+    local locations = get_macro_locations()
+    local var_indent = get_indent(locations["autowire"].start_col)
+    local vardefs = {string.format("%s// Beginning of automatic wires (for undeclared instantiated-module outputs)", var_indent)}
 
     for id, node in asterisk_instances:iter_captures(root, bufnr, 0, -1) do
+        local range = { node:range() }
         local group = asterisk_instances.captures[id]
         if(group == "inst_name") then
             name = vim.treesitter.get_node_text(node, bufnr, {})
+            offset = range[2]
+            port_indent = get_indent(offset)
         elseif(group == "port_map" ) then
             local connections = get_folded_portmap(node, bufnr)
             local module_def = copy_port_table(modules, name)
 
-            local range = { node:range() }
             table.insert(new_portmap, 1, {
                 start_row = range[1],
                 stop_row = range[3],
@@ -254,13 +315,13 @@ M.unfold = function ()
             -- check if the ports from current buffer corespond 
             -- to the found ports in the module definitions
             local ports = {}
-            local modul_remaining_ports
             for _, c in pairs(connections) do
                 for i, d in pairs(module_def) do
                     if(d.name == c.port_name) then
                         -- TODO check for duplicates (maybe in the future)
+                        -- TODO maybe check if the connection exists (optional) 
                         -- need to add comma at the end of port
-                        table.insert(ports, string.format("%s,", c.definition))
+                        table.insert(ports, string.format("%s%s,", port_indent, c.definition))
                         table.remove(module_def, i)
                         break
                     end
@@ -268,21 +329,32 @@ M.unfold = function ()
             end
             -- add .* at the end of the portmap
             -- merge unfolded portmap part with manualy assigned ports
-            local pmap =  create_port_map(".*,", module_def)
-            for _, p in ipairs(pmap) do
-                ports[#ports+1] = p
-            end
+            create_port_map(".*,", module_def, ports, port_indent)
+            create_var_defs(vardefs, module_def, var_indent)
 
             new_portmap[1].txt = ports
         end
     end
-
+    -- add definitions of variables at the last place in table
+    -- TODO needs to be changed in the future - the place in
+    -- the final table has to be adjusted according to the
+    -- places of macros in the file
+    vardefs[#vardefs+1] = string.format("%s// End of automatics", var_indent)
+    vardefs[#vardefs+1] = "" -- place empty line
+    table.insert(new_portmap, {
+        start_row = locations["autowire"].start_row,
+        stop_row = locations["autowire"].stop_row,
+        start_col = locations["autowire"].start_col,
+        stop_col = locations["autowire"].stop_col,
+        txt = vardefs
+    })
+    -- TODO we have to create array with all the ports an ddefinitions to be
+    -- undfolded, and sort it refering to their line number
     for _, f in ipairs(new_portmap) do
-        api.nvim_buf_set_text(bufnr, f.start_row, f.start_col,
+        api.nvim_buf_set_text(bufnr, f.start_row, 0,
                               f.stop_row, f.stop_col, f.txt)
     end
 end
-
 
 M.fold = function ()
     local name
@@ -300,7 +372,6 @@ M.fold = function ()
             print(test) ]]
             local connections = get_folded_portmap(node, bufnr)
             local module_def = modules[name]
-            P(connections)
 
             local range = { node:range() }
             table.insert(new_portmap, 1, {
@@ -310,13 +381,15 @@ M.fold = function ()
                 start_col = range[2],
                 stop_col = range[4]
             })
+
             -- check if the ports from current buffer corespond 
             -- to the found ports in the module definitions
             for i, c in pairs(connections) do
                 for _, d in pairs(module_def) do
                     if(d.name == c.port_name) then
                         -- need to add comma at the end of port
-                        table.insert(new_portmap[1].txt, string.format("%s,", c.definition))
+                        table.insert(new_portmap[1].txt,
+                        string.format("%s,", c.definition))
                         -- TODO check for duplicates (maybe in the future)
                         break
                     end
@@ -333,43 +406,7 @@ M.fold = function ()
     end
 end
 
-
--- TODO create list of variable definitions 
--- and put the in the test file
-M.write_signals = function ()
-    local bufnr = api.nvim_get_current_buf()
-    local root = get_root(bufnr)
-    local macro_positions = {}
-    local macro_name
-
-    for id, node in neoverilog_macros:iter_captures(root, bufnr, 0, -1) do
-        local group = neoverilog_macros.captures[id]
-        local range = { node:range() }
-        if (group == "post_comment") then
-            macro_positions[macro_name].stop_row = range[3]
-            macro_positions[macro_name].stop_col = range[4]
-        else
-            macro_name = group
-            macro_positions[macro_name] = {}
-            macro_positions[macro_name].start_row = range[1]
-            macro_positions[macro_name].start_col = range[2]
-            macro_positions[macro_name].stop_row = range[3]
-            macro_positions[macro_name].stop_col = range[4]
-        end
-    end
-
-    -- this is just a TEST
-    -- try to remove the variable definitions based on the
-    --[[ for _, f in pairs(macro_positions) do
-        api.nvim_buf_set_text(bufnr, f.start_row, f.start_col,
-        f.stop_row, f.stop_col, {})
-    end ]]
-
-end
-
-
 command('NeoUnfold', M.unfold, {})
 command('NeoFold', M.fold, {})
-command('NeoVars', M.write_signals, {})
 
 return M
