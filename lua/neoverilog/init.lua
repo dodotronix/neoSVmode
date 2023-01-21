@@ -192,18 +192,16 @@ local get_macro_locations = function ()
         local group = neoverilog_macros.captures[id]
         local range = { node:range() }
         if (group == "post_comment") then
-            macro_positions[macro_name].stop_row = range[3]
-            macro_positions[macro_name].stop_col = range[4]
+            macro_positions[macro_name].stop_row = range[3] + 1
         elseif (group == "pre_comment") then
             macro_positions[macro_name].start_row = range[1]
-            macro_positions[macro_name].start_col = range[2]
         else
             macro_name = group
             macro_positions[macro_name] = {}
-            macro_positions[macro_name].start_row = range[1]+1
+            macro_positions[macro_name].start_row = range[1] + 1
             macro_positions[macro_name].start_col = range[2]
-            macro_positions[macro_name].stop_row = range[1]+1
-            macro_positions[macro_name].stop_col = range[2]
+            macro_positions[macro_name].stop_row = range[1] + 1
+            macro_positions[macro_name].stop_col = 0
         end
     end
 
@@ -265,7 +263,7 @@ local get_folded_portmap = function (root, bufnr)
 end
 
 local create_port_map = function (pre, port_table, result, indent)
-    result[#result+1] = string.format("%s%s", align, pre)
+    result[#result+1] = string.format("%s%s", indent, pre)
     for i, tab in pairs(port_table) do
         local separator = ","
         if(i == #port_table) then
@@ -400,6 +398,7 @@ M.fold = function ()
         end
     end
 
+-- TODO place the signal declarations within the 
     for _, f in ipairs(new_portmap) do
         api.nvim_buf_set_text(bufnr, f.start_row, f.start_col,
                               f.stop_row, f.stop_col, f.txt)
