@@ -1,6 +1,10 @@
 --
+-- TODO test if interfaces are added to portmaps
+-- TODO add missing variables definitions 
 -- TODO load it as git package to nvim
 -- TODO rewrite the code to be better organized
+-- TODO check for the library definitions
+-- TODO add configuration file to set: indent, extra libraries ...
 
 local api = vim.api
 local command = api.nvim_create_user_command
