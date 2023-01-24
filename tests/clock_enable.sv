@@ -3,6 +3,7 @@
 module clock_enable #(parameter RATIO=50)( 
     input logic rst,
     input logic clk,
+    input logic [7:0] haha,
     output logic o_en);
 
     logic [7:0] cnt;
