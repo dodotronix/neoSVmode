@@ -1,6 +1,5 @@
 --
--- TODO fixe alignment
--- TODO remove variable duplicates 
+-- TODO load it as git package to nvim
 -- TODO rewrite the code to be better organized
 
 local api = vim.api
@@ -274,10 +273,22 @@ local create_port_map = function (pre, port_table, result, indent)
     end
 end
 
-local create_var_defs = function (result, port_table, indent)
+local create_var_defs = function (result, port_table, indent, existing)
+    local var_exists = function (list, var)
+        for i = 1, #list do
+            if(list[i] == var) then
+                return true
+            end
+        end
+        table.insert(existing, var)
+        return false
+    end
     for _, tab in pairs(port_table) do
-        table.insert(result,
-        string.format("%s%s %s;", indent, tab.datatype, tab.name))
+        if(not var_exists(existing, tab.name)) then
+            print(tab.name)
+            table.insert(result,
+            string.format("%s%s %s;", indent, tab.datatype, tab.name))
+        end
     end
 end
 
@@ -292,6 +303,7 @@ M.unfold = function ()
     local locations = get_macro_locations()
     local var_indent = get_indent(locations["autowire"].start_col)
     local vardefs = {string.format("%s// Beginning of automatic wires (for undeclared instantiated-module outputs)", var_indent)}
+    local existing_vars = {}
 
     for id, node in asterisk_instances:iter_captures(root, bufnr, 0, -1) do
         local range = { node:range() }
@@ -328,7 +340,7 @@ M.unfold = function ()
             -- add .* at the end of the portmap
             -- merge unfolded portmap part with manualy assigned ports
             create_port_map(".*,", module_def, ports, port_indent)
-            create_var_defs(vardefs, module_def, var_indent)
+            create_var_defs(vardefs, module_def, var_indent, existing_vars)
 
             new_portmap[1].txt = ports
         end
