@@ -1,0 +1,3 @@
+-- TODO module finder (searches for modules in table)
+-- TODO the search has to also include the modules
+-- definitions inside current file
