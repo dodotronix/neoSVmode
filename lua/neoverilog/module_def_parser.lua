@@ -1,0 +1,3 @@
+-- create table of informations about module definition
+-- TODO add missing variables definitions 
+-- TODO check for the library definitions

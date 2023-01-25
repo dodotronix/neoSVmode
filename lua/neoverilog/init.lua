@@ -7,6 +7,7 @@
 -- TODO add configuration file to set: indent, extra libraries ...
 -- TODO notifie the user, that not all stars were unfolded
 -- TODO attache the fold and unfold functions to key shortcuts
+-- TODO read setup table and upload the settings
 
 local api = vim.api
 local command = api.nvim_create_user_command
