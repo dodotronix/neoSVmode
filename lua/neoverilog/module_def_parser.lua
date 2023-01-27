@@ -1,3 +1,21 @@
 -- create table of informations about module definition
 -- TODO add missing variables definitions 
 -- TODO check for the library definitions
+--
+
+-- definitions = {
+--      module_name : { 
+--          parameters : { 
+--              name : value,
+--              default : value
+--          },
+--          ports : { 
+--              name : { 
+--                  direction : value,
+--                  type : value,
+--                  width : value 
+--              },
+--              ...
+--          }, 
+--      }, 
+-- }

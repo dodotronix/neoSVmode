@@ -1,1 +1,18 @@
 -- TODO add missing variables definitions 
+
+-- vars = {
+--     macro_name : {
+--          position : { row_start : value, 
+--              row_stop : value, 
+--              col_start : value, 
+--              col_stop : value }
+--          definitions : {
+--              name_id : { 
+--                  type : value,
+--                  width : value,
+--                  target_name : value
+--              } 
+--          }
+--      },
+--      ...
+--  }
