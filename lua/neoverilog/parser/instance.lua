@@ -1,0 +1,30 @@
+local LanguageTree = require('vim.treesitter.languagetree')
+
+I = {}
+
+function I:new(instance_tree, str_content)
+    local d = {instance_tree = instance_tree,
+               str_content = str_content,
+               prams = {},
+               vars = {}
+              }
+    setmetatable(d, self)
+    self.__index = self
+    d:get_raw_instance()
+    return d
+end
+
+function I.from_str_content(str_content)
+    local trees = LanguageTree.new(str_content, 'verilog', {})
+    trees = trees:parse()
+    if #trees > 0 then
+            return I:new(trees[1], str_content)
+    end
+    return nil
+end
+
+function I:get_raw_instance()
+    print(self.str_content)
+end
+
+return I
