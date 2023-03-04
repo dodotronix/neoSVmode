@@ -26,9 +26,11 @@ function M.from_str_content(str_content)
     return nil
 end
 
+
 function M:get_instantiations()
     local  instance_query = vim.treesitter.parse_query(
-    "verilog", [[((module_or_generate_item) @t)]])
+    "verilog", [[((module_or_generate_item) @t 
+    (#match? @t "\\w+\\s*\\w+\\s*\\((\\.\\([\\w_]*\\))|(\\s*(\\.\\*\\s*),?)*\\);"))]])
     for _, n in instance_query:iter_captures(self.module_tree:root(), self.str_content) do
         local node_text = ts_query.get_node_text(n, self.str_content, false)
         local i = Instance.from_str_content(node_text)
