@@ -12,7 +12,7 @@ function M:new(module_tree, str_content)
               }
     setmetatable(d, self)
     self.__index = self
-    -- d:get_instantiations()
+    d:get_instantiations()
     d:get_macros()
     -- d:get_raw_module()
     return d
@@ -41,14 +41,14 @@ end
 function M:get_macros()
     local root = self.module_tree:root()
     local module_ts_type = root:child():type()
-    local  instance_query = vim.treesitter.parse_query(
+    local  macro_query = vim.treesitter.parse_query(
     "verilog", [[
     ((comment) @macro (#match? @macro "\\/\\*[A-Z]+\\*\\/"))
     ((comment) @end (#match? @end "// End of automatics"))]])
-    for i, n in instance_query:iter_captures(root, self.str_content) do
+    for i, n in macro_query:iter_captures(root, self.str_content) do
         local node_type = n:parent():type()
         if node_type == module_ts_type then
-            local group = instance_query.captures[i]
+            local group = macro_query.captures[i]
             local range = { n:range() }
             if group == "macro" then
                 local txt = ts_query.get_node_text(n, self.str_content)
