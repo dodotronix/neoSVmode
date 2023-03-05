@@ -10,7 +10,8 @@ function I:new(instance_tree, str_content)
               }
     setmetatable(d, self)
     self.__index = self
-    d:get_raw_instance()
+    d:parse_instance()
+    -- d:get_raw_instance()
     return d
 end
 
@@ -21,6 +22,31 @@ function I.from_str_content(str_content)
             return I:new(trees[1], str_content)
     end
     return nil
+end
+
+function I:parse_instance()
+    -- print(self.str_content)
+    -- local name = string.gsub(self.str_content, "^([%w_]+).*", "%1")
+        -- local portmap = string.gsub(self.str_content, "")
+    --[[ for i in  string.match(self.str_content, ".[%w_]+%([%w_]+%)") do
+        print(i)
+    end ]]
+    -- local parameters = string.gsub(self.str_content, "")
+    -- read all  
+    --[[ for i, n in instance_query:iter_captures(self.instance_tree:root(), self.str_content) do
+        local group = instance_query.captures[i]
+        print(group)
+    end ]]
+end
+
+function I:get_list_of_variables()
+
+end
+
+function I:get_portmap()
+    -- find the module definition
+    -- parse the portmap
+    -- create table
 end
 
 -- TODO get the portmaps with .* and find the remaining port names 
