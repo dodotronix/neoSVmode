@@ -23,6 +23,13 @@ function I.from_str_content(str_content)
     return nil
 end
 
+-- TODO get the portmaps with .* and find the remaining port names 
+-- to be able to unfold them
+-- TODO find all definitions for the module instances 
+-- TODO get the portmaps from each of the file (dont forget, that 
+-- there could be more module definitions per file
+-- TODO get the portmaps and if the user forgotter .* add it
+
 function I:get_raw_instance()
     print(self.str_content)
 end
