@@ -7,7 +7,7 @@ function I:new(instance_tree, str_content, name)
     local d = {instance_tree = instance_tree,
                str_content = str_content,
                name = name,
-               autoparam = false,
+               autoinstparam = false,
                autoinst = false,
                param_assignments = {},
                port_assignments = {},
@@ -16,8 +16,9 @@ function I:new(instance_tree, str_content, name)
               }
     setmetatable(d, self)
     self.__index = self
-    d:get_parameters()
-    -- d:get_ports()
+    -- d:get_parameters()
+    d:get_macros()
+    d:get_ports()
     -- d:get_raw_instance()
     return d
 end
@@ -81,7 +82,17 @@ function I:get_parameters()
 end
 
 function I:get_macros()
-
+    local root = self.instance_tree:root()
+    local param_query = vim.treesitter.parse_query("verilog",
+    [[ ((comment) @macro (#match? @macro "/\\*\\u+\\*/")) ]])
+    for _, n in param_query:iter_captures(root, self.str_content) do
+        local txt = ts_query.get_node_text(n, self.str_content)
+        if txt == "/*AUTOINST*/" then
+            self.autoinst = true
+        elseif txt == "/*AUTOINSTPARAM*/" then
+            self.autoinstparam = true
+        end
+    end
 end
 
 function I:get_formated_variables()
