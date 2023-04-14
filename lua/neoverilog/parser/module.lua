@@ -7,6 +7,7 @@ M = {}
 function M:new(module_tree, str_content)
     local d = {module_tree = module_tree,
                str_content = str_content,
+               unique_names = {},
                instances = {},
                macros = {}
               }
@@ -34,6 +35,10 @@ function M:get_instantiations()
     for _, n in instance_query:iter_captures(self.module_tree:root(), self.str_content) do
         local node_text = ts_query.get_node_text(n, self.str_content, false)
         local i = Instance.from_str_content(node_text)
+        if i ~= nil then
+            local name = i:get_name()
+            self.unique_names[name] = true
+        end
         table.insert(self.instances, i)
     end
 end
@@ -65,6 +70,14 @@ function M:get_macros()
             end
         end
     end
+end
+
+function M:get_unique_names(unique_names_buffer)
+    local tmp = unique_names_buffer
+    for name, _ in pairs(self.unique_names) do
+        tmp[name] = true
+    end
+    return tmp
 end
 
 function M:get_raw_module()

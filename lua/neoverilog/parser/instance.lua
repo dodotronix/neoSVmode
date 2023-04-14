@@ -7,6 +7,7 @@ function I:new(instance_tree, str_content, name)
     local d = {instance_tree = instance_tree,
                str_content = str_content,
                name = name,
+               results = {},
                autoinstparam = false,
                autoinst = false,
                param_assignments = {},
@@ -17,8 +18,8 @@ function I:new(instance_tree, str_content, name)
     setmetatable(d, self)
     self.__index = self
     -- d:get_parameters()
-    d:get_macros()
-    d:get_ports()
+    -- d:get_macros()
+    -- d:get_ports()
     -- d:get_raw_instance()
     return d
 end
@@ -59,7 +60,7 @@ function I:get_ports()
             self.port_assignments[1][group] = txt
         end
     end
-    P(self.port_assignments)
+    -- P(self.port_assignments)
 end
 
 function I:get_parameters()
@@ -78,7 +79,7 @@ function I:get_parameters()
             self.param_assignments[1][group] = txt
         end
     end
-    P(self.param_assignments)
+    -- P(self.param_assignments)
 end
 
 function I:get_macros()
@@ -96,18 +97,58 @@ function I:get_macros()
 end
 
 function I:get_formated_variables()
-
 end
 
-function I:get_portmap_from_definition()
+-- rg -l -U --multiline-dotall -g "*.sv" -e "module\s+top" ./
+
+-- needs to get the table of found definitions
+--
+
+function I:get_portmap_from_definition(def_path)
+    if #def_path > 1 then
+        print("functionality to pick inst definitions - not implemented yet")
+    end
+    local content = vim.fn.readfile(def_path[1])
+    local file_content = vim.fn.join(content, "\n")
+    local trees = LanguageTree.new(file_content, 'verilog', {})
+    trees = trees:parse()
+    if #trees <= 0 then
+        return
+    end
+
+    local module_def_params = vim.treesitter.parse_query(
+    "verilog", [[(named_port_connection  
+                    (port_identifier) @id 
+                    (expression) @value)@line
+                ]])
+
+    local module_def_ports = vim.treesitter.parse_query(
+    "verilog", [[(named_port_connection  
+                    (port_identifier) @id 
+                    (expression) @value)@line
+                ]])
+
+    for i, n in module_def_params:iter_captures(trees:root(), file_content) do
+        print(i, n)
+    end
+    for i, n in module_def_ports:iter_captures(trees:root(), file_content) do
+        print(i, n)
+    end
     -- find the module definition
     -- parse the portmap
     -- create table
 end
 
+function I:get_name()
+    return self.name
+end
+
+-- TODO add settings file where you could specify paths to 
+-- compilation and simulation libraries
+
 -- TODO find all definitions for the module instances 
 -- TODO find the remaining port names to be able to unfold them
--- TODO get the portmaps from each of the file (dont forget, that 
+-- TODO get the portmaps from each of the file (don't forget, that 
 -- there could be more module definitions per file
 -- TODO get the portmaps and if the user forgotten .* add it
 

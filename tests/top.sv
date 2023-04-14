@@ -29,8 +29,19 @@ module top #(parameter int TEST=32,
         .o_en(something),
         .*);
 
-    clock_enable #(.RATIO(10)) u_clken1 (
+    hallo hallo1 (
+        .o_en(something),
         .*);
+
+    another #(/*AUTOINSTPARAM*/) u_clken (
+        .ClkRs_ix (tagged_data_x.ClkRs_ix),       
+        .o_en(something),
+        .ho(ho),
+        .co(co),
+        .*);
+
+    clock_enable #(.RATIO(10)) u_clken1 (
+        /*AUTOINST*/);
 
     always_ff @(posedge clk) begin
         if(rst) begin
