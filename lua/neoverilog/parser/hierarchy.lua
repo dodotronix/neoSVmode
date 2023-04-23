@@ -1,10 +1,7 @@
 local api = vim.api
-local ts_query = vim.treesitter.query
+local ts_query = vim.treesitter
 local Module = require("neoverilog.parser.module")
 local LanguageTree = require('vim.treesitter.languagetree')
-local Job = require('plenary.job').Job
-local a = require('plenary.async')
-local async, await = a.async, a.await
 
 -- TODO maybe add a memoization module to store all the found paths 
 -- and store the values in /tmp/ under unique number for a certain branch
@@ -36,7 +33,7 @@ function H.from_buffer(bufnr)
 end
 
 function H:get_modules()
-    local module_query = vim.treesitter.parse_query(
+    local module_query = vim.treesitter.query.parse(
     "verilog", [[(module_declaration) @module]])
 
     for _, n in module_query:iter_captures(self.tree:root(), self.str_content) do
@@ -57,23 +54,10 @@ end
 local paths = {}
 
 function H:find_definition_files()
-    local unique_ids = self:get_unique_names()
-    local pattern = "module\\s+" .. "clock_enable"
-    -- TODO paralle search for paths of the instances in unique_ids
-
-    --[[ -- for id, _ in pairs(unique_ids) do
-        local tmp_job = Job:new({
-            command = 'rg',
-            args = {},
-            cwd = '.',
-            env = {},
-            on_exit = function(j, _)
-                table.insert(paths, j:result())
-            end,
-        })
-        tmp_job:start() ]]
-    -- end
-    -- P(paths)
+    -- print(root_dir)
+    -- local unique_ids = self:get_unique_names()
+    -- P(unique_ids)
+    -- rg -l -U --multiline-dotall -g '*.sv' -e "module\\s+clock_enable" .
     -- TODO find each unique_id and get its path
 end
 

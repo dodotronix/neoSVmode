@@ -1,6 +1,6 @@
 local Instance = require("neoverilog.parser.instance")
 local LanguageTree = require('vim.treesitter.languagetree')
-local ts_query = vim.treesitter.query
+local ts_query = vim.treesitter
 
 M = {}
 
@@ -29,7 +29,7 @@ function M.from_str_content(str_content)
 end
 
 function M:get_instantiations()
-    local  instance_query = vim.treesitter.parse_query(
+    local  instance_query = vim.treesitter.query.parse(
     "verilog", [[((module_or_generate_item) @t 
     (#match? @t "\\w+\\s*\\w+\\s*\\((\\.\\([\\w_]*\\))|(\\s*(\\.\\*\\s*),?)*\\);"))]])
     for _, n in instance_query:iter_captures(self.module_tree:root(), self.str_content) do
@@ -46,7 +46,7 @@ end
 function M:get_macros()
     local root = self.module_tree:root()
     local module_ts_type = root:child():type()
-    local  macro_query = vim.treesitter.parse_query(
+    local  macro_query = vim.treesitter.query.parse(
     "verilog", [[
     ((comment) @macro (#match? @macro "\\/\\*[A-Z]+\\*\\/"))
     ((comment) @end (#match? @end "// End of automatics"))]])

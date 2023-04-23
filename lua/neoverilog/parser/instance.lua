@@ -1,5 +1,5 @@
 local LanguageTree = require('vim.treesitter.languagetree')
-local ts_query = vim.treesitter.query
+local ts_query = vim.treesitter
 
 I = {}
 
@@ -46,7 +46,7 @@ end
 
 function I:get_ports()
     local root = self.instance_tree:root()
-    local ports_query = vim.treesitter.parse_query(
+    local ports_query = vim.treesitter.query.parse(
     "verilog", [[(named_port_connection  
                     (port_identifier) @id 
                     (expression) @value)@line
@@ -65,7 +65,7 @@ end
 
 function I:get_parameters()
     local root = self.instance_tree:root()
-    local param_query = vim.treesitter.parse_query("verilog",
+    local param_query = vim.treesitter.query.parse("verilog",
     [[ (named_parameter_assignment  
         (parameter_identifier) @id 
         (param_expression) @value)@line  
@@ -84,7 +84,7 @@ end
 
 function I:get_macros()
     local root = self.instance_tree:root()
-    local param_query = vim.treesitter.parse_query("verilog",
+    local param_query = vim.treesitter.query.parse("verilog",
     [[ ((comment) @macro (#match? @macro "/\\*\\u+\\*/")) ]])
     for _, n in param_query:iter_captures(root, self.str_content) do
         local txt = ts_query.get_node_text(n, self.str_content)
@@ -116,13 +116,13 @@ function I:get_portmap_from_definition(def_path)
         return
     end
 
-    local module_def_params = vim.treesitter.parse_query(
+    local module_def_params = vim.treesitter.query.parse(
     "verilog", [[(named_port_connection  
                     (port_identifier) @id 
                     (expression) @value)@line
                 ]])
 
-    local module_def_ports = vim.treesitter.parse_query(
+    local module_def_ports = vim.treesitter.query.parse(
     "verilog", [[(named_port_connection  
                     (port_identifier) @id 
                     (expression) @value)@line
