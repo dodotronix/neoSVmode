@@ -1,6 +1,7 @@
 local api = vim.api
 local ts_query = vim.treesitter
 local Module = require("neoverilog.parser.module")
+local util = require('vim.lsp.util')
 local LanguageTree = require('vim.treesitter.languagetree')
 
 -- TODO maybe add a memoization module to store all the found paths 
@@ -38,7 +39,11 @@ function H:get_modules()
 
     for _, n in module_query:iter_captures(self.tree:root(), self.str_content) do
         local node_text = ts_query.get_node_text(n, self.str_content, false)
-        local m = Module.from_str_content(node_text)
+        local range = { n:range() }
+        -- start/stop row, start/stop column
+        local start_offset = {range[1], range[2]}
+        local end_offset = {range[3], range[4]}
+        local m = Module.from_str_content(node_text, start_offset, end_offset)
         table.insert(self.modules, m)
     end
 end
@@ -54,6 +59,21 @@ end
 local paths = {}
 
 function H:find_definition_files()
+    -- P(vim.lsp.protocol.make_client_capabilities())
+    local handler = vim.lsp.get_active_clients()
+    local params = util.make_position_params()
+    P(params)
+    -- print(vim.uri_to_bufnr(buf))
+
+
+    local res, err = vim.lsp.buf_request_sync(
+    0,
+    "textDocument/definition",
+    params)
+
+    -- P(res)
+    -- P(err)
+
     -- print(root_dir)
     -- local unique_ids = self:get_unique_names()
     -- P(unique_ids)

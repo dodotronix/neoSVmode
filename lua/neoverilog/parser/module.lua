@@ -4,9 +4,11 @@ local ts_query = vim.treesitter
 
 M = {}
 
-function M:new(module_tree, str_content)
+function M:new(module_tree, str_content, start_offset, end_offset)
     local d = {module_tree = module_tree,
                str_content = str_content,
+               start_offset = start_offset,
+               end_offset = end_offset,
                unique_names = {},
                instances = {},
                macros = {}
@@ -19,11 +21,11 @@ function M:new(module_tree, str_content)
     return d
 end
 
-function M.from_str_content(str_content)
+function M.from_str_content(str_content, start_offset, end_offset)
     local trees = LanguageTree.new(str_content, 'verilog', {})
     trees = trees:parse()
     if #trees > 0 then
-        return M:new(trees[1], str_content)
+        return M:new(trees[1], str_content, start_offset, end_offset)
     end
     return nil
 end
@@ -34,7 +36,10 @@ function M:get_instantiations()
     (#match? @t "\\w+\\s*\\w+\\s*\\((\\.\\([\\w_]*\\))|(\\s*(\\.\\*\\s*),?)*\\);"))]])
     for _, n in instance_query:iter_captures(self.module_tree:root(), self.str_content) do
         local node_text = ts_query.get_node_text(n, self.str_content, false)
-        local i = Instance.from_str_content(node_text)
+        local range = { n:range() }
+        local start_offset = {range[1], range[2]}
+        local end_offset = {range[3], range[4]}
+        local i = Instance.from_str_content(node_text, start_offset, end_offset)
         if i ~= nil then
             local name = i:get_name()
             self.unique_names[name] = true

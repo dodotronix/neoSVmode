@@ -3,9 +3,11 @@ local ts_query = vim.treesitter
 
 I = {}
 
-function I:new(instance_tree, str_content, name)
+function I:new(instance_tree, str_content, name, start_offset, end_offset)
     local d = {instance_tree = instance_tree,
                str_content = str_content,
+               start_offset = start_offset,
+               end_offset = end_offset,
                name = name,
                results = {},
                autoinstparam = false,
@@ -24,7 +26,7 @@ function I:new(instance_tree, str_content, name)
     return d
 end
 
-function I.from_str_content(str_content)
+function I.from_str_content(str_content, start_offset, end_offset)
 
     local name = string.match(str_content, "[%w_]+")
     -- IMPORTANT there is an issue with treesitter that it doesn't recognize 
@@ -39,7 +41,7 @@ function I.from_str_content(str_content)
     local trees = LanguageTree.new(w_content, 'verilog', {})
     trees = trees:parse()
     if #trees > 0 then
-            return I:new(trees[1],  w_content, name)
+            return I:new(trees[1],  w_content, name, start_offset, end_offset)
     end
     return nil
 end
@@ -99,10 +101,9 @@ end
 function I:get_formated_variables()
 end
 
--- rg -l -U --multiline-dotall -g "*.sv" -e "module\s+top" ./
-
--- needs to get the table of found definitions
---
+function I:get_lsp_position()
+    return {character=self.start_offset[2], line=self.start_offset[1]}
+end
 
 function I:get_portmap_from_definition(def_path)
     if #def_path > 1 then
@@ -151,6 +152,7 @@ end
 -- TODO get the portmaps from each of the file (don't forget, that 
 -- there could be more module definitions per file
 -- TODO get the portmaps and if the user forgotten .* add it
+-- rg -l -U --multiline-dotall -g "*.sv" -e "module\s+top" ./
 
 function I:get_raw_instance()
     print(self.str_content)
