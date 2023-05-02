@@ -42,7 +42,8 @@ function M:get_instantiations()
         local i = Instance.from_str_content(node_text, start_offset, end_offset)
         if i ~= nil then
             local name = i:get_name()
-            self.unique_names[name] = true
+            local position = i:get_lsp_position( self.start_offset[1], self.start_offset[2])
+            self.unique_names[name] = position
         end
         table.insert(self.instances, i)
     end
@@ -79,8 +80,8 @@ end
 
 function M:get_unique_names(unique_names_buffer)
     local tmp = unique_names_buffer
-    for name, _ in pairs(self.unique_names) do
-        tmp[name] = true
+    for name, pos in pairs(self.unique_names) do
+        tmp[name] = pos
     end
     return tmp
 end

@@ -56,29 +56,25 @@ function H:get_unique_names()
     return unique_ids
 end
 
-local paths = {}
-
 function H:find_definition_files()
-    -- P(vim.lsp.protocol.make_client_capabilities())
-    local handler = vim.lsp.get_active_clients()
-    local params = util.make_position_params()
-    P(params)
-    -- print(vim.uri_to_bufnr(buf))
 
+    local make_position_param = function (position)
+        return {
+            textDocument = util.make_text_document_params(),
+            position = position
+        }
+    end
 
-    local res, err = vim.lsp.buf_request_sync(
-    0,
-    "textDocument/definition",
-    params)
+    local unique_ids = self:get_unique_names()
+    for i, p in pairs(unique_ids) do
+        local res, err = vim.lsp.buf_request_sync(
+        0, "textDocument/definition", make_position_param(p))
+        unique_ids[i] = res[1]
+    end
 
-    -- P(res)
-    -- P(err)
-
-    -- print(root_dir)
-    -- local unique_ids = self:get_unique_names()
-    -- P(unique_ids)
+    P(unique_ids)
     -- rg -l -U --multiline-dotall -g '*.sv' -e "module\\s+clock_enable" .
-    -- TODO find each unique_id and get its path
+    -- TODO parsing and creating the port maps
 end
 
 

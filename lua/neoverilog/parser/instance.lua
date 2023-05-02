@@ -101,8 +101,9 @@ end
 function I:get_formated_variables()
 end
 
-function I:get_lsp_position()
-    return {character=self.start_offset[2], line=self.start_offset[1]}
+function I:get_lsp_position(line_offset, char_offset)
+    return {character=self.start_offset[2] + char_offset,
+            line=self.start_offset[1] + line_offset}
 end
 
 function I:get_portmap_from_definition(def_path)
