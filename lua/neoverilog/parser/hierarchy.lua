@@ -65,19 +65,39 @@ function H:find_definition_files()
         }
     end
 
+    local parse_definition = function (str_content)
+        local portmap_query = vim.treesitter.query.parse(
+        "", [[
+
+        ]])
+        local params_query = vim.treesitter.query.parse(
+        "", [[
+
+        ]])
+
+        for _, n in instance_query:iter_captures(self.module_tree:root(), self.str_content) do
+
+        end
+
+        return {portmap, params}
+    end
+
     local unique_ids = self:get_unique_names()
     for i, p in pairs(unique_ids) do
         local res, err = vim.lsp.buf_request_sync(
         0, "textDocument/definition", make_position_param(p))
-        unique_ids[i] = res[1]
+        local path = res[1].result.uri
+        if path ~= nil then
+            local content = vim.fn.readfile(path)
+            local str_content = vim.fn.join(content, "\n")
+            unique_ids[i] = parse_definition(str_content)
+        end
     end
 
     P(unique_ids)
     -- rg -l -U --multiline-dotall -g '*.sv' -e "module\\s+clock_enable" .
     -- TODO parsing and creating the port maps
 end
-
-
 
 function H:fill_portmaps()
     -- for i in modules:
