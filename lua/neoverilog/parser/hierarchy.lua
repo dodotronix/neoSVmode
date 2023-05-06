@@ -65,52 +65,52 @@ function H:find_definition_files()
         }
     end
 
-    local parse_definition = function (str_content)
-
-        local mod_definition_query = vim.treesitter.query.parse(
-        "verilog", [[
-        (module_declaration 
-        (module_header) @mod (#match? @mod "module top")) ]])
-
-        local portmap_query = vim.treesitter.query.parse(
-        "verilog", [[
-
-        ]])
-
-        local params_query = vim.treesitter.query.parse(
-        "verilog", [[
-        (_ (parameter_port_list (_ (_ (data_type_or_implicit1) @datatype
-        (_(_ (parameter_identifier) @id
-        (constant_param_expression) @value)
-        )))))) ]])
-
-        for _, n in instance_query:iter_captures(self.module_tree:root(), self.str_content) do
-        end
-
-        local portmap, params
-
-        return {portmap, params}
+    local parse_definition = function (content)
+        -- TODO
+        return content
     end
 
     local unique_ids = self:get_unique_names()
     for i, p in pairs(unique_ids) do
         local res, err = vim.lsp.buf_request_sync(
         0, "textDocument/definition", make_position_param(p))
-        local path = res[1].result.uri
-        if path ~= nil then
-            local content = vim.fn.readfile(path)
-            local str_content = vim.fn.join(content, "\n")
-            unique_ids[i] = parse_definition(str_content)
+        local result = res[1].result[1]
+
+        if result ~= nil then
+            local path =  result.uri
+            --[[ local content = vim.fn.readfile(path)
+            local file_content = vim.fn.join(content, "\n")
+            print(file_content)
+            local trees = LanguageTree.new(file_content, 'verilog', {})
+            trees = trees:parse()
+            if #trees <= 0 then
+                return
+            end
+
+            local content
+            local pattern = "(module_declaration (module_header) @m (#match? @m module " .. i  .. ")) @module"  
+            local def_query = vim.treesitter.query.parse("verilog", pattern)
+            for i, n in def_query:iter_captures(trees:root(), file_content) do
+                local group = def_query.captures[i]
+                if group == "module" then
+                     content = def_query.get_node_text(n, file_content)
+                end
+            end ]]
+
+            -- unique_ids[i] = parse_definition(content)
+            unique_ids[i] = path
+        else
+            -- TODO notify user that the module does not exist
+            unique_ids[i] = nil
         end
     end
-
     P(unique_ids)
     -- rg -l -U --multiline-dotall -g '*.sv' -e "module\\s+clock_enable" .
     -- TODO parsing and creating the port maps
 end
 
+
 function H:fill_portmaps()
-    -- for i in modules:
     -- call every module:get_unfolded_instances
 end
 

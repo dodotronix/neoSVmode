@@ -106,43 +106,14 @@ function I:get_lsp_position(line_offset, char_offset)
             line=self.start_offset[1] + line_offset}
 end
 
-function I:get_portmap_from_definition(def_path)
-    if #def_path > 1 then
-        print("functionality to pick inst definitions - not implemented yet")
-    end
-    local content = vim.fn.readfile(def_path[1])
-    local file_content = vim.fn.join(content, "\n")
-    local trees = LanguageTree.new(file_content, 'verilog', {})
-    trees = trees:parse()
-    if #trees <= 0 then
-        return
-    end
-
-    local module_def_params = vim.treesitter.query.parse(
-    "verilog", [[(named_port_connection  
-                    (port_identifier) @id 
-                    (expression) @value)@line
-                ]])
-
-    local module_def_ports = vim.treesitter.query.parse(
-    "verilog", [[(named_port_connection  
-                    (port_identifier) @id 
-                    (expression) @value)@line
-                ]])
-
-    for i, n in module_def_params:iter_captures(trees:root(), file_content) do
-        print(i, n)
-    end
-    for i, n in module_def_ports:iter_captures(trees:root(), file_content) do
-        print(i, n)
-    end
-    -- find the module definition
-    -- parse the portmap
-    -- create table
-end
 
 function I:get_name()
     return self.name
+end
+
+function I:parse_portmap()
+    for i in pairs() do
+    end
 end
 
 -- TODO add settings file where you could specify paths to 
