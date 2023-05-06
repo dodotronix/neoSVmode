@@ -66,18 +66,28 @@ function H:find_definition_files()
     end
 
     local parse_definition = function (str_content)
+
+        local mod_definition_query = vim.treesitter.query.parse(
+        "verilog", [[
+        (module_declaration 
+        (module_header) @mod (#match? @mod "module top")) ]])
+
         local portmap_query = vim.treesitter.query.parse(
-        "", [[
+        "verilog", [[
 
         ]])
+
         local params_query = vim.treesitter.query.parse(
-        "", [[
-
-        ]])
+        "verilog", [[
+        (_ (parameter_port_list (_ (_ (data_type_or_implicit1) @datatype
+        (_(_ (parameter_identifier) @id
+        (constant_param_expression) @value)
+        )))))) ]])
 
         for _, n in instance_query:iter_captures(self.module_tree:root(), self.str_content) do
-
         end
+
+        local portmap, params
 
         return {portmap, params}
     end
