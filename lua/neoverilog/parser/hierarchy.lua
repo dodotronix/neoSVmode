@@ -66,7 +66,39 @@ function H:find_definition_files()
     end
 
     local parse_definition = function (content)
-        -- TODO
+
+        local trees = LanguageTree.new(content, 'verilog', {})
+        trees = trees:parse()
+        if #trees > 0 then
+            local param_query = [[
+            ((data_type_or_implicit1) @datatype
+            (list_of_param_assignments (_ (parameter_identifier) @id
+            (constant_param_expression) @value)))
+           ]]
+
+            local port_query = [[
+            ((variable_port_header (port_direction) @direction
+            (data_type) @datatype)
+            (port_identifier) @id) 
+            ]]
+
+            local interface_query = [[
+            ((interface_port_header (interface_identifier) @iface   
+            (modport_identifier) @type)
+            (port_identifier) @id)
+            ]]
+
+            local def_query = vim.treesitter.query.parse("verilog", param_query)
+            for a, n in def_query:iter_captures(trees[1]:root(), file_content) do
+                local group = def_query.captures[a]
+                if group == "module" then
+                    local module_definition = ts_query.get_node_text(n, file_content)
+                    unique_ids[i] = parse_definition(module_definition)
+                end
+            end
+
+        end
+
         return content
     end
 
@@ -77,34 +109,31 @@ function H:find_definition_files()
         local result = res[1].result[1]
 
         if result ~= nil then
-            local path =  result.uri
-            --[[ local content = vim.fn.readfile(path)
+            local path = vim.uri_to_fname(result.uri)
+            local content = vim.fn.readfile(path)
             local file_content = vim.fn.join(content, "\n")
-            print(file_content)
+            unique_ids[i] = path
+
             local trees = LanguageTree.new(file_content, 'verilog', {})
             trees = trees:parse()
-            if #trees <= 0 then
-                return
-            end
+            if #trees > 0 then
+                local pattern = "(module_declaration (module_header) @m (#match? @m module " .. i  .. ")) @module"
 
-            local content
-            local pattern = "(module_declaration (module_header) @m (#match? @m module " .. i  .. ")) @module"  
-            local def_query = vim.treesitter.query.parse("verilog", pattern)
-            for i, n in def_query:iter_captures(trees:root(), file_content) do
-                local group = def_query.captures[i]
-                if group == "module" then
-                     content = def_query.get_node_text(n, file_content)
+                local def_query = vim.treesitter.query.parse("verilog", pattern)
+                for a, n in def_query:iter_captures(trees[1]:root(), file_content) do
+                    local group = def_query.captures[a]
+                    if group == "module" then
+                        local module_definition = ts_query.get_node_text(n, file_content)
+                        unique_ids[i] = parse_definition(module_definition)
+                    end
                 end
-            end ]]
-
-            -- unique_ids[i] = parse_definition(content)
-            unique_ids[i] = path
+            end
         else
-            -- TODO notify user that the module does not exist
+            -- TODO notify user that the module is not known
             unique_ids[i] = nil
         end
     end
-    P(unique_ids)
+    -- P(unique_ids)
     -- rg -l -U --multiline-dotall -g '*.sv' -e "module\\s+clock_enable" .
     -- TODO parsing and creating the port maps
 end
