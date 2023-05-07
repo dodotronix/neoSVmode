@@ -90,6 +90,9 @@ function H:find_definition_files()
             (port_identifier) @name) @iface
             ]]
 
+            -- TODO nonansi definitions parser
+            local nonansi_port = [[ (module_nonansi_header) @test ]]
+
             local parsers = {}
             parsers.param = vim.treesitter.query.parse("verilog", param_query)
             parsers.port = vim.treesitter.query.parse("verilog", port_query)
@@ -146,9 +149,7 @@ function H:find_definition_files()
             unique_ids[i] = nil
         end
     end
-    -- P(unique_ids)
     -- rg -l -U --multiline-dotall -g '*.sv' -e "module\\s+clock_enable" .
-    -- TODO parsing and creating the port maps
 end
 
 
