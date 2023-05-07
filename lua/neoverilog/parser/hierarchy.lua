@@ -66,40 +66,52 @@ function H:find_definition_files()
     end
 
     local parse_definition = function (content)
-
+        local res = {}
         local trees = LanguageTree.new(content, 'verilog', {})
         trees = trees:parse()
         if #trees > 0 then
             local param_query = [[
-            ((data_type_or_implicit1) @datatype
-            (list_of_param_assignments (_ (parameter_identifier) @id
-            (constant_param_expression) @value)))
+            (parameter_declaration (data_type_or_implicit1) @datatype
+            (list_of_param_assignments (_ (parameter_identifier) @name
+            (constant_param_expression) @value))) @param
            ]]
 
             local port_query = [[
-            ((variable_port_header (port_direction) @direction
+            ((ansi_port_declaration ( variable_port_header 
+            (port_direction) @direction
             (data_type) @datatype)
-            (port_identifier) @id) 
+            (port_identifier) @name)) @port
             ]]
 
             local interface_query = [[
-            ((interface_port_header (interface_identifier) @iface   
-            (modport_identifier) @type)
-            (port_identifier) @id)
+            (ansi_port_declaration (interface_port_header 
+            (interface_identifier) @id
+            (modport_identifier) @modport)
+            (port_identifier) @name) @iface
             ]]
 
-            local def_query = vim.treesitter.query.parse("verilog", param_query)
-            for a, n in def_query:iter_captures(trees[1]:root(), file_content) do
-                local group = def_query.captures[a]
-                if group == "module" then
-                    local module_definition = ts_query.get_node_text(n, file_content)
-                    unique_ids[i] = parse_definition(module_definition)
+            local parsers = {}
+            parsers.param = vim.treesitter.query.parse("verilog", param_query)
+            parsers.port = vim.treesitter.query.parse("verilog", port_query)
+            parsers.iface = vim.treesitter.query.parse("verilog", interface_query)
+
+            for name, p in pairs(parsers) do
+                local parsed = {}
+                for a, n in p:iter_captures(trees[1]:root(), content) do
+                    local group = p.captures[a]
+                    -- next param, port, iface definition
+                    -- create new empty list to store the
+                    -- parsed values from the TS query
+                    if parsers[group] ~= nil then
+                        table.insert(parsed, 1, {})
+                    else
+                        parsed[1][group] = ts_query.get_node_text(n, content)
+                    end
                 end
+                res[name] = parsed
             end
-
         end
-
-        return content
+        return res
     end
 
     local unique_ids = self:get_unique_names()
@@ -120,6 +132,7 @@ function H:find_definition_files()
                 local pattern = "(module_declaration (module_header) @m (#match? @m module " .. i  .. ")) @module"
 
                 local def_query = vim.treesitter.query.parse("verilog", pattern)
+
                 for a, n in def_query:iter_captures(trees[1]:root(), file_content) do
                     local group = def_query.captures[a]
                     if group == "module" then
