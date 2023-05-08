@@ -86,6 +86,42 @@ function M:get_unique_names(unique_names_buffer)
     return tmp
 end
 
+function M:get_portmap_lists()
+    -- dummy function portmap
+    return {
+        {
+            params= {
+                range={ 37, 15, 37, 32 },
+                lines={
+                    {".TEST1(TEST1),"},
+                    {".TEST2(TEST2)"}
+                }
+            },
+            portmap= {
+                range={ 42, 9, 42, 10 },
+                lines={
+                    {"// Inputs"},
+                    {".signal1(signal1[31:0]),", "// *Implicit"},
+                    {"// Output"},
+                    {".signal2(signal2[31:0]),", "// *Implicit"},
+                }
+            }
+        }
+    }
+end
+
+function M:get_definition_lists()
+    -- dummy definition list
+    return {
+        range={ 14, 1, 22, 24 },
+        lines={
+            {"logic [31:0]", "signal1;", "// To instance_name of module_name.sv"},
+            {"logic [31:0]", "signal2;", "// To instance_name of module_name.sv"},
+            {"logic", "signal3;", "// To instance_name1 of module_name1.sv"}
+        }
+    }
+end
+
 function M:get_raw_module()
     print(self.content_str)
     -- query.get_node_text(self.node, )

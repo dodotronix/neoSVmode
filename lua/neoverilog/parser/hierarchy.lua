@@ -13,12 +13,14 @@ local H = {}
 function H:new(tree, content, str_content)
     local d = {tree = tree,
                content = content,
+               unique_ids = {},
                modules = {},
                definitions = {},
                str_content = str_content}
     setmetatable(d, self)
     self.__index = self
     d:get_modules()
+    d:find_definitions()
     return d
 end
 
@@ -49,14 +51,13 @@ function H:get_modules()
 end
 
 function H:get_unique_names()
-    local unique_ids = {}
     for _, m in ipairs(self.modules) do
-        unique_ids = m:get_unique_names(unique_ids)
+        self.unique_ids = m:get_unique_names(self.unique_ids)
     end
-    return unique_ids
+    return self.unique_ids
 end
 
-function H:find_definition_files()
+function H:find_definitions()
 
     local make_position_param = function (position)
         return {
@@ -117,8 +118,8 @@ function H:find_definition_files()
         return res
     end
 
-    local unique_ids = self:get_unique_names()
-    for i, p in pairs(unique_ids) do
+    self:get_unique_names()
+    for i, p in pairs(self.unique_ids) do
         local res, err = vim.lsp.buf_request_sync(
         0, "textDocument/definition", make_position_param(p))
         local result = res[1].result[1]
@@ -127,7 +128,7 @@ function H:find_definition_files()
             local path = vim.uri_to_fname(result.uri)
             local content = vim.fn.readfile(path)
             local file_content = vim.fn.join(content, "\n")
-            unique_ids[i] = path
+            self.unique_ids[i] = path
 
             local trees = LanguageTree.new(file_content, 'verilog', {})
             trees = trees:parse()
@@ -140,21 +141,31 @@ function H:find_definition_files()
                     local group = def_query.captures[a]
                     if group == "module" then
                         local module_definition = ts_query.get_node_text(n, file_content)
-                        unique_ids[i] = parse_definition(module_definition)
+                        self.unique_ids[i] = parse_definition(module_definition)
                     end
                 end
             end
         else
             -- TODO notify user that the module is not known
-            unique_ids[i] = nil
+            self.unique_ids[i] = nil
         end
     end
-    -- rg -l -U --multiline-dotall -g '*.sv' -e "module\\s+clock_enable" .
 end
 
+function H:unfold_macros()
 
-function H:fill_portmaps()
-    -- call every module:get_unfolded_instances
+    -- {
+        -- { range }
+        -- { list of string lines }
+    -- }
+
+    local var_definitions = {}
+
+    for _, m in ipairs(self.modules) do
+       var_definitions = m:get_definition_lists()
+    end
+    P(var_definitions)
+    -- sort the maps according to the line number 
 end
 
 return H
