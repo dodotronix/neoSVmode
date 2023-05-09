@@ -159,14 +159,33 @@ function H:unfold_macros(bufnr)
         -- { list of string lines }
     -- }
 
-    local vars = {}
+    -- join all definition lists together
+    local merged = {}
     for _, m in ipairs(self.modules) do
-       vars = m:get_definition_lists()
+        local definitions = m:get_definition_list()
+        table.move(definitions, 1, #definitions, #merged + 1, merged)
+
+        break -- just for testing
     end
 
     -- sort the maps according to the line  
-    api.nvim_buf_set_text(bufnr, vars.range[1], vars.range[2],
-    vars.range[3], vars.range[4], vars.lines)
+    -- from the highest line number to the lowest
+    table.sort(merged, function (a, b)
+        if(a.range[1] > b.range[1]) then
+            return true
+        else
+            return false
+        end
+    end)
+
+    for _, n in pairs(merged) do
+        api.nvim_buf_set_text(bufnr, n.range[1], n.range[2],
+        n.range[3], n.range[4], n.lines)
+    end
+end
+
+function H:fold_macros(bufnr)
+    -- remove all the lines between .* and );
 end
 
 return H
