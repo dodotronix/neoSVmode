@@ -152,20 +152,21 @@ function H:find_definitions()
     end
 end
 
-function H:unfold_macros()
+function H:unfold_macros(bufnr)
 
     -- {
         -- { range }
         -- { list of string lines }
     -- }
 
-    local var_definitions = {}
-
+    local vars = {}
     for _, m in ipairs(self.modules) do
-       var_definitions = m:get_definition_lists()
+       vars = m:get_definition_lists()
     end
-    P(var_definitions)
-    -- sort the maps according to the line number 
+
+    -- sort the maps according to the line  
+    api.nvim_buf_set_text(bufnr, vars.range[1], vars.range[2],
+    vars.range[3], vars.range[4], vars.lines)
 end
 
 return H

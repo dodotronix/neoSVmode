@@ -93,17 +93,17 @@ function M:get_portmap_lists()
             params= {
                 range={ 37, 15, 37, 32 },
                 lines={
-                    {".TEST1(TEST1),"},
-                    {".TEST2(TEST2)"}
+                    ".TEST1(TEST1),",
+                    ".TEST2(TEST2)"
                 }
             },
             portmap= {
                 range={ 42, 9, 42, 10 },
                 lines={
-                    {"// Inputs"},
-                    {".signal1(signal1[31:0]),", "// *Implicit"},
-                    {"// Output"},
-                    {".signal2(signal2[31:0]),", "// *Implicit"},
+                    "// Inputs",
+                    ".signal1(signal1[31:0]),", "// *Implicit",
+                    "// Output",
+                    ".signal2(signal2[31:0]),", "// *Implicit",
                 }
             }
         }
@@ -113,11 +113,13 @@ end
 function M:get_definition_lists()
     -- dummy definition list
     return {
-        range={ 14, 1, 22, 24 },
+        range={ 14, 0, 21, 24 },
         lines={
-            {"logic [31:0]", "signal1;", "// To instance_name of module_name.sv"},
-            {"logic [31:0]", "signal2;", "// To instance_name of module_name.sv"},
-            {"logic", "signal3;", "// To instance_name1 of module_name1.sv"}
+            "// Beginning of automatic reg inputs (for undeclared instantiated-module inputs)",
+            "logic [31:0] signal1; // To instance_name of module_name.sv",
+            "logic [31:0] signal2; // To instance_name of module_name.sv",
+            "logic signal3; // To instance_name1 of module_name1.sv",
+            "// End of automatics"
         }
     }
 end

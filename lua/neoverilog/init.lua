@@ -23,7 +23,7 @@ M.node_test = function ()
     local bufnr = api.nvim_get_current_buf()
     local m = hierarchy.from_buffer(bufnr)
     if m ~= nil then
-        m:unfold_macros()
+        m:unfold_macros(bufnr)
     end
 end
 
