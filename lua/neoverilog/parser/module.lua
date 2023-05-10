@@ -86,9 +86,28 @@ function M:get_unique_names(unique_names_buffer)
     return tmp
 end
 
-function M:get_definition_list()
+function M:get_macro_contents(list_of_definitions)
     -- dummy function portmap
-    return {
+
+    local merged = {}
+    local vars_merged= {}
+
+    for _, m in ipairs(self.instances) do
+        local definitions, var_defs = m:get_macro_contents(list_of_definitions)
+        table.move(definitions, 1, #definitions, #merged + 1, merged)
+        table.move(var_defs, 1, #var_defs, #vars_merged + 1, vars_merged)
+    end
+    
+    -- TODO fill the range based on the macro position
+    local vers_defs_packed = {range={}, lines={}}
+    vers_defs_packed.lines = vars_merged
+
+    -- add the vars to the merged table
+    table.insert(merged, #merged+1, vers_defs_packed)
+
+    return merged
+
+    --[[ return {
         {
             range={ 14, 0, 21, 24 },
             lines={
@@ -118,7 +137,7 @@ function M:get_definition_list()
                 ".TEST2(TEST2)"
             }
         }
-    }
+    } ]]
 end
 
 function M:get_raw_module()

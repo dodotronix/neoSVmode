@@ -160,9 +160,10 @@ function H:unfold_macros(bufnr)
     -- }
 
     -- join all definition lists together
+    -- TQDQ place in utils.lua
     local merged = {}
     for _, m in ipairs(self.modules) do
-        local definitions = m:get_definition_list()
+        local definitions = m:get_macro_contents(self.definitions)
         table.move(definitions, 1, #definitions, #merged + 1, merged)
 
         break -- just for testing
