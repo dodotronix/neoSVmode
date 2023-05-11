@@ -106,14 +106,28 @@ function I:get_lsp_position(line_offset, char_offset)
             line=self.start_offset[1] + line_offset}
 end
 
-
 function I:get_name()
     return self.name
 end
 
-function I:parse_portmap()
-    for i in pairs() do
-    end
+function I:get_macro_contents(list_of_definitions)
+    local definitions = {
+        {
+            range={ 41, 10, 41, 10 },
+            lines={
+                ",",
+                "// Inputs",
+                ".signal1(signal1[31:0]), // *Implicit",
+                "// Output",
+                ".signal2(signal2[31:0]), // *Implicit",
+                ""
+            }
+        }
+    }
+    local var_defs = { "hohohohohohoh" }
+
+
+    return definitions, var_defs
 end
 
 -- TODO add settings file where you could specify paths to 

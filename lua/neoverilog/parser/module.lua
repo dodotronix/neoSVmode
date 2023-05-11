@@ -97,10 +97,12 @@ function M:get_macro_contents(list_of_definitions)
         table.move(definitions, 1, #definitions, #merged + 1, merged)
         table.move(var_defs, 1, #var_defs, #vars_merged + 1, vars_merged)
     end
-    
-    -- TODO fill the range based on the macro position
-    local vers_defs_packed = {range={}, lines={}}
+
+    local vers_defs_packed = { range={}, lines={} }
     vers_defs_packed.lines = vars_merged
+
+    -- TODO fill the range based on the macro position
+    vers_defs_packed.range = { 14, 0, 21, 24 }
 
     -- add the vars to the merged table
     table.insert(merged, #merged+1, vers_defs_packed)
