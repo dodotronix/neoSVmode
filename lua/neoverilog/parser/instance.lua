@@ -165,11 +165,6 @@ end
 
 -- TODO add settings file where you could specify paths to 
 -- compilation and simulation libraries
-
--- TODO find all definitions for the module instances 
--- TODO find the remaining port names to be able to unfold them
--- TODO get the portmaps from each of the file (don't forget, that 
--- there could be more module definitions per file
 -- TODO get the portmaps and if the user forgotten .* add it
 -- rg -l -U --multiline-dotall -g "*.sv" -e "module\s+top" ./
 
