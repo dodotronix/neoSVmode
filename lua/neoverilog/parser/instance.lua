@@ -46,6 +46,7 @@ end
 
 function I:get_ports()
     local root = self.instance_tree:root()
+    local tmp = {}
     local ports_query = vim.treesitter.query.parse(
     "verilog", [[(named_port_connection  
                     (port_identifier) @id 
@@ -57,12 +58,21 @@ function I:get_ports()
         local txt = ts_query.get_node_text(n, self.str_content)
         local group = ports_query.captures[i]
         if group == "line" then
-            table.insert(self.port_assignments, 1, {})
+            table.insert(tmp, 1, {})
         elseif group == "asterisk" then
             self.asterisk = { n:range() }
         else
-            self.port_assignments[1][group] = txt
+            tmp[1][group] = txt
         end
+
+    end
+
+    -- create dictionary for easier management
+    for _, c in pairs(tmp) do
+        local id = c.id
+        local list = c
+        list.id = nil -- remove name
+        self.port_assignments[id] = list
     end
     -- P(self.port_assignments)
 end
@@ -122,9 +132,12 @@ function I:get_macro_contents(list_of_definitions)
         return
     end
 
-    --[[ for i in pairs(self.) do
+    P(self.port_assignments)
 
-    end ]]
+    -- TODO BUILD the unfolded portmap 
+    for i, n in pairs(def_portmap.port) do 
+        print(i, n)
+    end
 
     local var_defs = { "hohohohohohoh" }
     local definitions = {

@@ -106,6 +106,7 @@ function M:get_macro_contents(list_of_definitions)
     vers_defs_packed.lines = vars_merged
 
     -- TODO fill the range based on the macro position
+    -- create the decoration for the variables
     vers_defs_packed.range = { 14, 0, 21, 24 }
 
     -- add the vars to the merged table

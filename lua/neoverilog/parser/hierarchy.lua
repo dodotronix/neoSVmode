@@ -99,17 +99,26 @@ function H:find_definitions()
             parsers.iface = vim.treesitter.query.parse("verilog", interface_query)
 
             for name, p in pairs(parsers) do
-                local parsed = {}
+                local tmp = {}
                 for a, n in p:iter_captures(trees[1]:root(), content) do
                     local group = p.captures[a]
                     -- next param, port, iface definition
                     -- create new empty list to store the
                     -- parsed values from the TS query
                     if parsers[group] ~= nil then
-                        table.insert(parsed, 1, {})
+                        table.insert(tmp, 1, {})
                     else
-                        parsed[1][group] = ts_query.get_node_text(n, content)
+                        tmp[1][group] = ts_query.get_node_text(n, content)
                     end
+                end
+
+                -- create dictionary for easier management
+                local parsed = {}
+                for _, c in pairs(tmp) do
+                    local id = c.name
+                    local list = c
+                    list.name = nil -- remove name
+                    parsed[id] = list
                 end
                 res[name] = parsed
             end
