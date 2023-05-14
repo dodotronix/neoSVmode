@@ -94,8 +94,12 @@ function M:get_macro_contents(list_of_definitions)
 
     for _, m in ipairs(self.instances) do
         local definitions, var_defs = m:get_macro_contents(list_of_definitions)
-        table.move(definitions, 1, #definitions, #merged + 1, merged)
-        table.move(var_defs, 1, #var_defs, #vars_merged + 1, vars_merged)
+        if (definitions ~= nil) then
+            table.move(definitions, 1, #definitions, #merged + 1, merged)
+        end
+        if (var_defs ~= nil) then
+            table.move(var_defs, 1, #var_defs, #vars_merged + 1, vars_merged)
+        end
     end
 
     local vers_defs_packed = { range={}, lines={} }

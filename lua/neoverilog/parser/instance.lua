@@ -9,19 +9,17 @@ function I:new(instance_tree, str_content, name, start_offset, end_offset)
                start_offset = start_offset,
                end_offset = end_offset,
                name = name,
-               results = {},
+               asterisk = {},
                autoinstparam = false,
                autoinst = false,
                param_assignments = {},
-               port_assignments = {},
-               prams_all = {},
-               vars_all = {}
+               port_assignments = {}
               }
     setmetatable(d, self)
     self.__index = self
     -- d:get_parameters()
     -- d:get_macros()
-    -- d:get_ports()
+    d:get_ports()
     -- d:get_raw_instance()
     return d
 end
@@ -52,12 +50,16 @@ function I:get_ports()
     "verilog", [[(named_port_connection  
                     (port_identifier) @id 
                     (expression) @value)@line
+                    ((named_port_connection) @asterisk 
+                    (#eq? @asterisk "\.\*"))
                 ]])
     for i, n in ports_query:iter_captures(root, self.str_content) do
         local txt = ts_query.get_node_text(n, self.str_content)
         local group = ports_query.captures[i]
         if group == "line" then
             table.insert(self.port_assignments, 1, {})
+        elseif group == "asterisk" then
+            self.asterisk = { n:range() }
         else
             self.port_assignments[1][group] = txt
         end
@@ -91,14 +93,13 @@ function I:get_macros()
     for _, n in param_query:iter_captures(root, self.str_content) do
         local txt = ts_query.get_node_text(n, self.str_content)
         if txt == "/*AUTOINST*/" then
+            -- TODO save the position of the macro
             self.autoinst = true
         elseif txt == "/*AUTOINSTPARAM*/" then
+            -- TODO save the position of the macro
             self.autoinstparam = true
         end
     end
-end
-
-function I:get_formated_variables()
 end
 
 function I:get_lsp_position(line_offset, char_offset)
@@ -111,6 +112,21 @@ function I:get_name()
 end
 
 function I:get_macro_contents(list_of_definitions)
+
+    if(self.asterisk == nil) then
+        return
+    end
+
+    local def_portmap = list_of_definitions[self.name]
+    if(def_portmap == nil) then
+        return
+    end
+
+    --[[ for i in pairs(self.) do
+
+    end ]]
+
+    local var_defs = { "hohohohohohoh" }
     local definitions = {
         {
             range={ 41, 10, 41, 10 },
@@ -124,7 +140,6 @@ function I:get_macro_contents(list_of_definitions)
             }
         }
     }
-    local var_defs = { "hohohohohohoh" }
 
 
     return definitions, var_defs

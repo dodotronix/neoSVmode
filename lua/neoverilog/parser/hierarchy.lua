@@ -20,7 +20,6 @@ function H:new(tree, content, str_content)
     setmetatable(d, self)
     self.__index = self
     d:get_modules()
-    d:find_definitions()
     return d
 end
 
@@ -162,8 +161,9 @@ function H:unfold_macros(bufnr)
     -- join all definition lists together
     -- TQDQ place in utils.lua
     local merged = {}
+    self:find_definitions()
     for _, m in ipairs(self.modules) do
-        local definitions = m:get_macro_contents(self.definitions)
+        local definitions = m:get_macro_contents(self.unique_ids)
         table.move(definitions, 1, #definitions, #merged + 1, merged)
 
         break -- just for testing
