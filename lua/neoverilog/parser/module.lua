@@ -93,7 +93,8 @@ function M:get_macro_contents(list_of_definitions)
     local vars_merged= {}
 
     for _, m in ipairs(self.instances) do
-        local definitions, var_defs = m:get_macro_contents(list_of_definitions)
+        local definitions, var_defs = m:get_macro_contents(list_of_definitions, self.start_offset)
+
         if (definitions ~= nil) then
             table.move(definitions, 1, #definitions, #merged + 1, merged)
         end
@@ -103,6 +104,8 @@ function M:get_macro_contents(list_of_definitions)
     end
 
     local vers_defs_packed = { range={}, lines={} }
+    table.insert(vars_merged, 1, "// Beginning of automatic reg inputs (for undeclared instantiated-module inputs)")
+    table.insert(vars_merged, #vars_merged+1, "// End of automatics")
     vers_defs_packed.lines = vars_merged
 
     -- TODO fill the range based on the macro position

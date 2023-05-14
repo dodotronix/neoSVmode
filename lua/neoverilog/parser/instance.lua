@@ -121,7 +121,7 @@ function I:get_name()
     return self.name
 end
 
-function I:get_macro_contents(list_of_definitions)
+function I:get_macro_contents(list_of_definitions, offset)
 
     if(self.asterisk == nil) then
         return
@@ -132,28 +132,33 @@ function I:get_macro_contents(list_of_definitions)
         return
     end
 
-    P(self.port_assignments)
+    local ports = {range={}, lines={","}}
+    local var_defs = {}
+    local definitions = {}
 
-    -- TODO BUILD the unfolded portmap 
-    for i, n in pairs(def_portmap.port) do 
-        print(i, n)
+    -- build stamp for the 
+    for id, content in pairs(def_portmap.port) do
+        if self.port_assignments[id] == nil then
+            -- TODO sort the output according to the 
+            -- add commentary to the signal
+            local def_stamp = string.format(".%s(%s), // *Implicit", id, id)
+            local var_stamp = string.format("%s %s;", content.datatype, id)
+            table.insert(ports.lines, def_stamp)
+            table.insert(var_defs, var_stamp)
+        end
     end
 
-    local var_defs = { "hohohohohohoh" }
-    local definitions = {
-        {
-            range={ 41, 10, 41, 10 },
-            lines={
-                ",",
-                "// Inputs",
-                ".signal1(signal1[31:0]), // *Implicit",
-                "// Output",
-                ".signal2(signal2[31:0]), // *Implicit",
-                ""
-            }
-        }
-    }
+    -- add new line at the end of the portmap
+    table.insert(ports.lines, "")
 
+    if next(self.asterisk) ~= nil then
+        ports.range = {
+            self.asterisk[1]+self.start_offset[1] + offset[1] - 1,
+            self.asterisk[4],
+            self.asterisk[3]+self.start_offset[1] + offset[1] - 1,
+            self.asterisk[4]}
+        definitions = {ports}
+    end
 
     return definitions, var_defs
 end
