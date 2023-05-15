@@ -174,7 +174,7 @@ function H:unfold_macros(bufnr)
     for _, m in ipairs(self.modules) do
         local definitions = m:get_macro_contents(self.unique_ids)
         table.move(definitions, 1, #definitions, #merged + 1, merged)
-        break -- just for testing
+        -- break -- just for testing
     end
 
     -- sort the maps according to the line  

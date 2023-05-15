@@ -56,6 +56,9 @@ function M:get_macros()
     "verilog", [[
     ((comment) @macro (#match? @macro "\\/\\*[A-Z]+\\*\\/"))
     ((comment) @end (#match? @end "// End of automatics"))]])
+
+    local name
+
     for i, n in macro_query:iter_captures(root, self.str_content) do
         local node_type = n:parent():type()
         if node_type == module_ts_type then
@@ -63,16 +66,16 @@ function M:get_macros()
             local range = { n:range() }
             if group == "macro" then
                 local txt = ts_query.get_node_text(n, self.str_content)
-                local name = string.gsub(txt, "/%*(%u+)%*/", "%1")
-                table.insert(self.macros, 1, {})
-                self.macros[1] = {name = name,
-                start_line = range[1],
-                stop_line = range[3]}
+                name = string.gsub(txt, "/%*(%u+)%*/", "%1")
+                range[1] = range[1] + self.start_offset[1]
+                range[3] = range[3] + self.start_offset[1]
+                self.macros[name] = range
             else
                 -- replace the end line number if the block
                 -- of variables is closed with the "// end 
                 -- of automatics" sentence
-                self.macros[1].stop_line = range[3]
+                self.macros[name][3] =  range[3] + self.start_offset[1]
+                self.macros[name][4] =  range[4]
             end
         end
     end
@@ -103,17 +106,23 @@ function M:get_macro_contents(list_of_definitions)
         end
     end
 
-    local vers_defs_packed = { range={}, lines={} }
-    table.insert(vars_merged, 1, "// Beginning of automatic reg inputs (for undeclared instantiated-module inputs)")
-    table.insert(vars_merged, #vars_merged+1, "// End of automatics")
-    vers_defs_packed.lines = vars_merged
+    -- TODO split variables into the macro groups
+    if (self.macros["AUTOWIRE"] ~= nil) then
+        local vers_defs_packed = { range={}, lines={} }
 
-    -- TODO fill the range based on the macro position
-    -- create the decoration for the variables
-    vers_defs_packed.range = { 14, 0, 21, 24 }
 
-    -- add the vars to the merged table
-    table.insert(merged, #merged+1, vers_defs_packed)
+        if next(vars_merged) ~= nil then
+            table.insert(vars_merged, 1, "// Beginning of automatic reg inputs (for undeclared instantiated-module inputs)")
+            table.insert(vars_merged, #vars_merged+1, "// End of automatics")
+        end
+
+        vers_defs_packed.lines = vars_merged
+        table.insert(vers_defs_packed.lines, 1, "/*AUTOWIRE*/")
+        vers_defs_packed.range = self.macros["AUTOWIRE"]
+
+        -- add the vars to the merged table
+        table.insert(merged, #merged+1, vers_defs_packed)
+    end
 
     return merged
 
