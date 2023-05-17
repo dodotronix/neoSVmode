@@ -42,9 +42,7 @@ function H:get_modules()
         local node_text = ts_query.get_node_text(n, self.str_content, false)
         local range = { n:range() }
         -- start/stop row, start/stop column
-        local start_offset = {range[1], range[2]}
-        local end_offset = {range[3], range[4]}
-        local m = Module.from_str_content(node_text, start_offset, end_offset)
+        local m = Module.from_str_content(node_text, range[1], range[2])
         table.insert(self.modules, m)
     end
 end

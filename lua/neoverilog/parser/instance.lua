@@ -3,11 +3,11 @@ local ts_query = vim.treesitter
 
 I = {}
 
-function I:new(instance_tree, str_content, name, start_offset, end_offset)
+function I:new(instance_tree, str_content, name, line, indent)
     local d = {instance_tree = instance_tree,
                str_content = str_content,
-               start_offset = start_offset,
-               end_offset = end_offset,
+               indent = indent,
+               line = line,
                name = name,
                asterisk = {},
                autoinstparam = false,
@@ -24,7 +24,7 @@ function I:new(instance_tree, str_content, name, start_offset, end_offset)
     return d
 end
 
-function I.from_str_content(str_content, start_offset, end_offset)
+function I.from_str_content(str_content, line, indent)
 
     local name = string.match(str_content, "[%w_]+")
     -- IMPORTANT there is an issue with treesitter that it doesn't recognize 
@@ -39,7 +39,7 @@ function I.from_str_content(str_content, start_offset, end_offset)
     local trees = LanguageTree.new(w_content, 'verilog', {})
     trees = trees:parse()
     if #trees > 0 then
-            return I:new(trees[1],  w_content, name, start_offset, end_offset)
+        return I:new(trees[1],  w_content, name, line, indent)
     end
     return nil
 end
@@ -112,22 +112,21 @@ function I:get_macros()
     end
 end
 
-function I:get_lsp_position(line_offset, char_offset)
-    return {character=self.start_offset[2] + char_offset,
-            line=self.start_offset[1] + line_offset}
+function I:get_lsp_position(line, indent)
+    return {character=self.indent + indent, line=self.line + line}
 end
 
 function I:get_name()
     return self.name
 end
 
-function I.align_port_assignment(offset, id, ending)
-    local indent = (" "):rep(offset)
+function I.align_port_assignment(indent, id, ending)
+    local indent = (" "):rep(indent)
     local port_assign = string.format(".%s(%s)%s // *Implicit", id, id, ending)
     return indent .. port_assign
 end
 
-function I:get_macro_contents(list_of_definitions, offset)
+function I:get_macro_contents(list_of_definitions, line, indent)
 
     if(self.asterisk == nil) then
         return
@@ -147,10 +146,7 @@ function I:get_macro_contents(list_of_definitions, offset)
         if self.port_assignments[id] == nil then
             -- TODO sort the output according to the 
             -- add commentary to the signal
-            -- TODO wrong offset needs to be combined with the self.start_offset
-            -- TODO when parsing, accumulate the correct offset while parsing
-            -- the modules
-            local def_stamp = self.align_port_assignment(offset[1], id, ",")
+            local def_stamp = self.align_port_assignment(line, id, ",")
             local var_stamp = string.format("%s %s;", content.datatype, id)
             table.insert(ports.lines, def_stamp)
             table.insert(var_defs, var_stamp)
@@ -162,9 +158,9 @@ function I:get_macro_contents(list_of_definitions, offset)
 
     if next(self.asterisk) ~= nil then
         ports.range = {
-            self.asterisk[1]+self.start_offset[1] + offset[1] - 1,
+            self.asterisk[1] + self.line + line - 1,
             self.asterisk[4],
-            self.asterisk[3]+self.start_offset[1] + offset[1] - 1,
+            self.asterisk[3] + self.line + line - 1,
             self.asterisk[4]}
         definitions = {ports}
     end

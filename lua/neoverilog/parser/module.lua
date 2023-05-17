@@ -4,11 +4,11 @@ local ts_query = vim.treesitter
 
 M = {}
 
-function M:new(module_tree, str_content, start_offset, end_offset)
+function M:new(module_tree, str_content, line, indent)
     local d = {module_tree = module_tree,
                str_content = str_content,
-               start_offset = start_offset,
-               end_offset = end_offset,
+               line = line,
+               indent = indent,
                unique_names = {},
                instances = {},
                macros = {}
@@ -21,11 +21,11 @@ function M:new(module_tree, str_content, start_offset, end_offset)
     return d
 end
 
-function M.from_str_content(str_content, start_offset, end_offset)
+function M.from_str_content(str_content, line, indent)
     local trees = LanguageTree.new(str_content, 'verilog', {})
     trees = trees:parse()
     if #trees > 0 then
-        return M:new(trees[1], str_content, start_offset, end_offset)
+        return M:new(trees[1], str_content, line, indent)
     end
     return nil
 end
@@ -37,12 +37,10 @@ function M:get_instantiations()
     for _, n in instance_query:iter_captures(self.module_tree:root(), self.str_content) do
         local node_text = ts_query.get_node_text(n, self.str_content, false)
         local range = { n:range() }
-        local start_offset = {range[1], range[2]}
-        local end_offset = {range[3], range[4]}
-        local i = Instance.from_str_content(node_text, start_offset, end_offset)
+        local i = Instance.from_str_content(node_text, range[1], range[2])
         if i ~= nil then
             local name = i:get_name()
-            local position = i:get_lsp_position( self.start_offset[1], self.start_offset[2])
+            local position = i:get_lsp_position( self.line, self.indent )
             self.unique_names[name] = position
         end
         table.insert(self.instances, i)
@@ -67,14 +65,14 @@ function M:get_macros()
             if group == "macro" then
                 local txt = ts_query.get_node_text(n, self.str_content)
                 name = string.gsub(txt, "/%*(%u+)%*/", "%1")
-                range[1] = range[1] + self.start_offset[1]
-                range[3] = range[3] + self.start_offset[1]
+                range[1] = range[1] + self.line
+                range[3] = range[3] + self.line
                 self.macros[name] = range
             else
                 -- replace the end line number if the block
                 -- of variables is closed with the "// end 
                 -- of automatics" sentence
-                self.macros[name][3] =  range[3] + self.start_offset[1]
+                self.macros[name][3] =  range[3] + self.line
                 self.macros[name][4] =  range[4]
             end
         end
@@ -96,7 +94,7 @@ function M:get_macro_contents(list_of_definitions)
     local vars_merged= {}
 
     for _, m in ipairs(self.instances) do
-        local definitions, var_defs = m:get_macro_contents(list_of_definitions, self.start_offset)
+        local definitions, var_defs = m:get_macro_contents(list_of_definitions, self.line, self.indent)
 
         if (definitions ~= nil) then
             table.move(definitions, 1, #definitions, #merged + 1, merged)
