@@ -187,7 +187,6 @@ function H:unfold_macros(bufnr)
         end
     end)
 
-    P(merged)
     for _, n in pairs(merged) do
         api.nvim_buf_set_text(bufnr, n.range[1], n.range[2],
         n.range[3], n.range[4], n.lines)

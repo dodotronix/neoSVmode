@@ -121,6 +121,12 @@ function I:get_name()
     return self.name
 end
 
+function I.align_port_assignment(offset, id, ending)
+    local indent = (" "):rep(offset)
+    local port_assign = string.format(".%s(%s)%s // *Implicit", id, id, ending)
+    return indent .. port_assign
+end
+
 function I:get_macro_contents(list_of_definitions, offset)
 
     if(self.asterisk == nil) then
@@ -141,7 +147,10 @@ function I:get_macro_contents(list_of_definitions, offset)
         if self.port_assignments[id] == nil then
             -- TODO sort the output according to the 
             -- add commentary to the signal
-            local def_stamp = string.format(".%s(%s), // *Implicit", id, id)
+            -- TODO wrong offset needs to be combined with the self.start_offset
+            -- TODO when parsing, accumulate the correct offset while parsing
+            -- the modules
+            local def_stamp = self.align_port_assignment(offset[1], id, ",")
             local var_stamp = string.format("%s %s;", content.datatype, id)
             table.insert(ports.lines, def_stamp)
             table.insert(var_defs, var_stamp)
