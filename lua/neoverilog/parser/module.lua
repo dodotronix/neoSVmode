@@ -94,8 +94,9 @@ function M:get_macro_contents(list_of_definitions)
     local vars_merged= {}
 
     for _, m in ipairs(self.instances) do
-        local definitions, var_defs = m:get_macro_contents(list_of_definitions, self.line, self.indent)
+        local definitions, var_defs, a = m:get_macro_contents(list_of_definitions, self.line, self.indent)
 
+        P(a)
         if (definitions ~= nil) then
             table.move(definitions, 1, #definitions, #merged + 1, merged)
         end

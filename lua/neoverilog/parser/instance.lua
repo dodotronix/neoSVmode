@@ -142,6 +142,7 @@ function I:get_macro_contents(list_of_definitions, line, indent)
     local ports = {range={}, lines={","}}
     local var_defs = {}
     local definitions = {}
+    local test = {}
 
     -- build stamp for the 
     for id, content in pairs(def_portmap.port) do
@@ -151,6 +152,17 @@ function I:get_macro_contents(list_of_definitions, line, indent)
             local def_stamp = self:align_port_assignment(indent, id, ",")
             -- P(def_stamp)
             local var_stamp = string.format("%s %s;", content.datatype, id)
+            local group
+            if content.direction == "input" then
+               group = "AUTOWIRE" 
+            elseif content.direction == "output" then
+               group = "AUTOREGINPUT" 
+            elseif content.direction == "inout" then
+               group = "AUTOINOUT" 
+            end
+            -- TODO create correct structure of the table
+            -- TODO check correct groupping of the variables   
+            table.insert(test[group], ) 
             table.insert(ports.lines, def_stamp)
             table.insert(var_defs, var_stamp)
         end
@@ -168,7 +180,7 @@ function I:get_macro_contents(list_of_definitions, line, indent)
         definitions = {ports}
     end
 
-    return definitions, var_defs
+    return definitions, var_defs, test
 end
 
 -- TODO add settings file where you could specify paths to 
