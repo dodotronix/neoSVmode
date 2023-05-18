@@ -100,6 +100,7 @@ function M:get_macro_contents(list_of_definitions)
             table.move(definitions, 1, #definitions, #merged + 1, merged)
         end
         if (var_defs ~= nil) then
+            -- TODO create list of strings and save them to final table
             table.move(var_defs, 1, #var_defs, #vars_merged + 1, vars_merged)
         end
     end

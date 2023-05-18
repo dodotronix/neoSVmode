@@ -8,6 +8,7 @@ function I:new(instance_tree, str_content, name, line, indent)
                str_content = str_content,
                indent = indent,
                line = line,
+               align = 0,
                name = name,
                asterisk = {},
                autoinstparam = false,
@@ -59,6 +60,8 @@ function I:get_ports()
         local group = ports_query.captures[i]
         if group == "line" then
             table.insert(tmp, 1, {})
+            local range = {n:range()}
+            self.align = range[1]
         elseif group == "asterisk" then
             self.asterisk = { n:range() }
         else
@@ -120,10 +123,9 @@ function I:get_name()
     return self.name
 end
 
-function I.align_port_assignment(indent, id, ending)
-    local indent = (" "):rep(indent)
-    local port_assign = string.format(".%s(%s)%s // *Implicit", id, id, ending)
-    return indent .. port_assign
+function I:align_port_assignment(indent, id, ending)
+    local indent = string.rep(" ", indent+self.indent+self.align+1)
+    return string.format("%s.%s(%s)%s // *Implicit", indent, id, id, ending)
 end
 
 function I:get_macro_contents(list_of_definitions, line, indent)
@@ -146,7 +148,8 @@ function I:get_macro_contents(list_of_definitions, line, indent)
         if self.port_assignments[id] == nil then
             -- TODO sort the output according to the 
             -- add commentary to the signal
-            local def_stamp = self.align_port_assignment(line, id, ",")
+            local def_stamp = self:align_port_assignment(indent, id, ",")
+            -- P(def_stamp)
             local var_stamp = string.format("%s %s;", content.datatype, id)
             table.insert(ports.lines, def_stamp)
             table.insert(var_defs, var_stamp)
