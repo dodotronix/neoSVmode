@@ -142,7 +142,8 @@ function I:get_macro_contents(list_of_definitions, line, indent)
     local ports = {range={}, lines={","}}
     local var_defs = {}
     local definitions = {}
-    local test = {}
+    local test = {AUTOWIRE={}, AUTOREGINPUT={}}
+    local comment_stamp = string.format("// From %s of %s.sv", self.name, self.name)
 
     -- build stamp for the 
     for id, content in pairs(def_portmap.port) do
@@ -152,17 +153,16 @@ function I:get_macro_contents(list_of_definitions, line, indent)
             local def_stamp = self:align_port_assignment(indent, id, ",")
             -- P(def_stamp)
             local var_stamp = string.format("%s %s;", content.datatype, id)
-            local group
+
+            local group = "AUTOWIRE"
             if content.direction == "input" then
-               group = "AUTOWIRE" 
-            elseif content.direction == "output" then
-               group = "AUTOREGINPUT" 
-            elseif content.direction == "inout" then
-               group = "AUTOINOUT" 
+               group = "AUTOREGINPUT"
             end
-            -- TODO create correct structure of the table
-            -- TODO check correct groupping of the variables   
-            table.insert(test[group], ) 
+
+            -- TODO add name of the file to the instance
+            test[group][id] = {content.datatype, comment_stamp}
+
+            -- TODO check correct groupping of the variables AUTOWIRE  
             table.insert(ports.lines, def_stamp)
             table.insert(var_defs, var_stamp)
         end

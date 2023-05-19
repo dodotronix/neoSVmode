@@ -92,11 +92,11 @@ function M:get_macro_contents(list_of_definitions)
 
     local merged = {}
     local vars_merged= {}
+    local vars_merged_new = {AUTOWIRE={}, AUTOREGINPUT={}}
 
     for _, m in ipairs(self.instances) do
         local definitions, var_defs, a = m:get_macro_contents(list_of_definitions, self.line, self.indent)
 
-        P(a)
         if (definitions ~= nil) then
             table.move(definitions, 1, #definitions, #merged + 1, merged)
         end
@@ -104,12 +104,21 @@ function M:get_macro_contents(list_of_definitions)
             -- TODO create list of strings and save them to final table
             table.move(var_defs, 1, #var_defs, #vars_merged + 1, vars_merged)
         end
+        P(a)
+
+        if(a.AUTOREGINPUT ~= nil) then
+            -- TODO create list which you transform into string
+        end
+
+        if(a.AUTOWIRE ~= nil) then
+            -- TODO create list which you transform into string
+        end
+
     end
 
     -- TODO split variables into the macro groups
     if (self.macros["AUTOWIRE"] ~= nil) then
         local vers_defs_packed = { range={}, lines={} }
-
 
         if next(vars_merged) ~= nil then
             table.insert(vars_merged, 1, "// Beginning of automatic reg inputs (for undeclared instantiated-module inputs)")
