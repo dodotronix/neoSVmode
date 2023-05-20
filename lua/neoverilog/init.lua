@@ -19,7 +19,7 @@ local command = api.nvim_create_user_command
 
 local M = {}
 
-M.node_test = function ()
+M.unfold = function ()
     local bufnr = api.nvim_get_current_buf()
     local m = hierarchy.from_buffer(bufnr)
     if m ~= nil then
@@ -27,6 +27,15 @@ M.node_test = function ()
     end
 end
 
-command('Vtest', M.node_test, {})
+M.fold = function ()
+    local bufnr = api.nvim_get_current_buf()
+    local m = hierarchy.from_buffer(bufnr)
+    if m ~= nil then
+        m:fold_macros(bufnr)
+    end
+end
+
+command('Fold', M.fold, {})
+command('Unfold', M.unfold, {})
 
 return M

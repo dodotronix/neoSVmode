@@ -162,13 +162,6 @@ function H:find_definitions()
 end
 
 function H:unfold_macros(bufnr)
-
-    -- {
-        -- { range }
-        -- { list of string lines }
-    -- }
-
-    -- join all definition lists together
     -- TQDQ place in utils.lua
     local merged = {}
     self:find_definitions()
