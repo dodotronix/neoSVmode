@@ -114,7 +114,7 @@ function M:get_macro_contents(list_of_definitions)
                     vars_merged_new[i][k] = vars_merged_new[i][k] or c
                     if vars_merged_new[i][k].name == nil then
                         vars_merged_new[i][k].name = m:get_name()
-                    else 
+                    else
                         vars_merged_new[i][k].name = string.format("%s, %s",
                         vars_merged_new[i][k].name, m:get_name())
                     end
@@ -126,16 +126,24 @@ function M:get_macro_contents(list_of_definitions)
     -- create the var definitions
     for n, c in pairs(vars_merged_new) do
         local test_merged = { range={}, lines={} }
-        if (self.macros[n] ~= nil) then
-            table.insert(test_merged.lines, 1, "// Beginning of automatic reg inputs (for undeclared instantiated-module inputs)")
-            table.insert(test_merged.lines, 1, string.format("/*%s*/", n))
+        local macro = ((n == "input") and "AUTOREGINPUT") or "AUTOWIRE"
+        local dir_string = ((n == "input") and "To") or "From"
+        local label = ((n == "input") and "regs")  or "wires"
+
+        if (self.macros[macro] ~= nil) then
+            local align = string.rep(" ", self.macros[macro][2] + self.indent)
+            local s =  string.format("%s// Beginning of automatic %s %s (for undeclared instantiated-module %s)",
+            align, label, n .. "s", n .. "s")
+            table.insert(test_merged.lines, 1, s)
+            table.insert(test_merged.lines, 1, string.format("/*%s*/", macro))
             for k, l in pairs(c) do
-                local var_stamp = string.format("%s %s; // From %s of %s",
-                l.datatype, k, l.name, l.filename)
+                local var_stamp = string.format("%s%s %s; // %s %s of %s",
+                align, l.datatype, k, dir_string, l.name, l.filename)
                 table.insert(test_merged.lines, var_stamp)
             end
-            table.insert(test_merged.lines, #test_merged.lines+1, "// End of automatics")
-            test_merged.range = self.macros[n]
+            table.insert(test_merged.lines, #test_merged.lines+1, align .. "// End of automatics")
+            test_merged.range = self.macros[macro]
+            P(test_merged)
             table.insert(merged, #merged+1, test_merged)
         end
     end
@@ -145,7 +153,6 @@ end
 
 function M:get_raw_module()
     print(self.content_str)
-    -- query.get_node_text(self.node, )
 end
 
 return M

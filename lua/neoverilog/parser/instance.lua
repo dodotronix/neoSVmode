@@ -150,14 +150,11 @@ function I:get_macro_contents(list_of_definitions, line, indent)
             local def_stamp = self:align_port_assignment(indent, id, ",")
             local var_stamp = string.format("%s %s;", content.datatype, id)
 
-            local macro = "AUTOWIRE"
-            if content.direction == "input" then
-               macro = "AUTOREGINPUT"
-            end
-            test[macro] = test[macro] or {}
+            test[content.direction] = test[content.direction] or {}
 
             -- TODO add name of the file to the instance
-            test[macro][id] = {datatype=content.datatype, filename=self.name}
+            test[content.direction][id] = {datatype=content.datatype,
+            filename=self.name}
 
             -- TODO check correct groupping of the variables AUTOWIRE  
             table.insert(ports.lines, def_stamp)
