@@ -10,6 +10,7 @@ function I:new(instance_tree, str_content, name, line, indent)
                line = line,
                align = 0,
                name = name,
+               iname = "",
                asterisk = {},
                autoinstparam = false,
                autoinst = false,
@@ -21,6 +22,7 @@ function I:new(instance_tree, str_content, name, line, indent)
     -- d:get_parameters()
     -- d:get_macros()
     d:get_ports()
+    d:parse_instance_name()
     -- d:get_raw_instance()
     return d
 end
@@ -121,6 +123,19 @@ end
 
 function I:get_name()
     return self.name
+end
+
+function I:get_instance_name()
+    return self.iname
+end
+
+function I:parse_instance_name()
+    local root = self.instance_tree:root()
+    local inst_name_query = vim.treesitter.query.parse("verilog",
+    [[ (name_of_instance) @iname ]])
+    for _, n in inst_name_query:iter_captures(root, self.str_content) do
+        self.iname = ts_query.get_node_text(n, self.str_content)
+    end
 end
 
 function I:align_port_assignment(indent, id, ending)

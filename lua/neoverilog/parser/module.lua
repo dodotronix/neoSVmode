@@ -113,10 +113,10 @@ function M:get_macro_contents(list_of_definitions)
                     -- TODO add get_instance_name to the instance class
                     vars_merged_new[i][k] = vars_merged_new[i][k] or c
                     if vars_merged_new[i][k].name == nil then
-                        vars_merged_new[i][k].name = m:get_name()
+                        vars_merged_new[i][k].name = m:get_instance_name()
                     else
                         vars_merged_new[i][k].name = string.format("%s, %s",
-                        vars_merged_new[i][k].name, m:get_name())
+                        vars_merged_new[i][k].name, m:get_instance_name())
                     end
                 end
             end
