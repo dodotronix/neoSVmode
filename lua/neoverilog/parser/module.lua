@@ -87,7 +87,7 @@ function M:get_unique_names(unique_names_buffer)
     return tmp
 end
 
-function M:get_macro_contents(list_of_definitions)
+function M:get_macro_contents(list_of_definitions, file_names)
     local merged = {}
     local vars_merged= {}
     local vars_merged_new = {}
@@ -138,12 +138,11 @@ function M:get_macro_contents(list_of_definitions)
             table.insert(test_merged.lines, 1, string.format("/*%s*/", macro))
             for k, l in pairs(c) do
                 local var_stamp = string.format("%s%s %s; // %s %s of %s",
-                align, l.datatype, k, dir_string, l.name, l.filename)
+                align, l.datatype, k, dir_string, l.name, file_names[l.filename])
                 table.insert(test_merged.lines, var_stamp)
             end
             table.insert(test_merged.lines, #test_merged.lines+1, align .. "// End of automatics")
             test_merged.range = self.macros[macro]
-            P(test_merged)
             table.insert(merged, #merged+1, test_merged)
         end
     end

@@ -14,6 +14,7 @@ function H:new(tree, content, str_content)
     local d = {tree = tree,
                content = content,
                unique_ids = {},
+               module_file_names = {},
                modules = {},
                definitions = {},
                str_content = str_content}
@@ -132,9 +133,11 @@ function H:find_definitions()
 
         if result ~= nil then
             local path = vim.uri_to_fname(result.uri)
+            local fname = string.gsub(path, ".*%/([%w_]+)", "%1")
+            self.module_file_names[i] = fname
             local content = vim.fn.readfile(path)
             local file_content = vim.fn.join(content, "\n")
-            self.unique_ids[i] = path
+            -- self.unique_ids[i] = path
 
             local trees = LanguageTree.new(file_content, 'verilog', {})
             trees = trees:parse()
@@ -170,7 +173,7 @@ function H:unfold_macros(bufnr)
     local merged = {}
     self:find_definitions()
     for _, m in ipairs(self.modules) do
-        local definitions = m:get_macro_contents(self.unique_ids)
+        local definitions = m:get_macro_contents(self.unique_ids, self.module_file_names)
         table.move(definitions, 1, #definitions, #merged + 1, merged)
         -- break -- just for testing
     end
