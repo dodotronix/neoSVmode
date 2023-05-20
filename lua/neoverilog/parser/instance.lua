@@ -121,6 +121,26 @@ function I:get_lsp_position(line, indent)
     return {character=self.indent + indent, line=self.line + line}
 end
 
+function I:get_unfolded_range()
+    local root = self.instance_tree:root()
+    local unfolded_query = vim.treesitter.query.parse("verilog",
+    [[ (module_or_generate_item) @module 
+       ((named_port_connection) @asterisk (#eq? @asterisk "\.\*")) ]])
+    local range
+
+    for _, n in unfolded_query:iter_captures(root, self.str_content) do
+        local group = unfolded_query.captures[i]
+        local r  = { n:range() }
+        if (group == "asterisk") then
+            range[1] = r[1]
+            range[2] = r[2]
+        else
+            range = r
+        end
+    end
+    return { range=range, lines={} }
+end
+
 function I:get_name()
     return self.name
 end

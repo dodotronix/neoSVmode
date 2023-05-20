@@ -150,6 +150,18 @@ function M:get_macro_contents(list_of_definitions, file_names)
     return merged
 end
 
+function M:get_unfolded_range()
+    local merged = {}
+    for _, m in ipairs(self.instances) do
+        local definitions = m:get_unfolded_range()
+
+        if (definitions ~= nil) then
+            table.insert(merged, #merged+1, definitions)
+        end
+    end
+    return merged
+end
+
 function M:get_raw_module()
     print(self.content_str)
 end

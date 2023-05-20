@@ -188,7 +188,26 @@ function H:unfold_macros(bufnr)
 end
 
 function H:fold_macros(bufnr)
-    -- remove all the lines between .* and );
+    local merged = {}
+    for _, m in ipairs(self.modules) do
+        local definitions = m:get_unfolded_range()
+        table.move(definitions, 1, #definitions, #merged + 1, merged)
+    end
+
+    table.sort(merged, function (a, b)
+        if(a.range[1] > b.range[1]) then
+            return true
+        else
+            return false
+        end
+    end)
+
+    P(merged)
+
+    for _, n in pairs(merged) do
+        api.nvim_buf_set_text(bufnr, n.range[1], n.range[2],
+        n.range[3], n.range[4], n.lines)
+    end
 end
 
 return H
