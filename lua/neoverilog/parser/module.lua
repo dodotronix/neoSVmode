@@ -88,11 +88,9 @@ function M:get_unique_names(unique_names_buffer)
 end
 
 function M:get_macro_contents(list_of_definitions)
-    -- dummy function portmap
-
     local merged = {}
     local vars_merged= {}
-    local vars_merged_new = {AUTOWIRE={}, AUTOREGINPUT={}}
+    local vars_merged_new = {}
 
     for _, m in ipairs(self.instances) do
         local definitions, var_defs, a = m:get_macro_contents(list_of_definitions, self.line, self.indent)
@@ -104,68 +102,45 @@ function M:get_macro_contents(list_of_definitions)
             -- TODO create list of strings and save them to final table
             table.move(var_defs, 1, #var_defs, #vars_merged + 1, vars_merged)
         end
-        P(a)
 
-        if(a.AUTOREGINPUT ~= nil) then
-            -- TODO create list which you transform into string
+        -- merge the definitions of variables together
+        if a ~= nil then
+            for i in pairs(a) do
+                if vars_merged_new[i] == nil then
+                    vars_merged_new[i] = a[i]
+                end
+                for k, c in pairs(a[i]) do
+                    -- TODO add get_instance_name to the instance class
+                    vars_merged_new[i][k] = vars_merged_new[i][k] or c
+                    if vars_merged_new[i][k].name == nil then
+                        vars_merged_new[i][k].name = m:get_name()
+                    else 
+                        vars_merged_new[i][k].name = string.format("%s, %s",
+                        vars_merged_new[i][k].name, m:get_name())
+                    end
+                end
+            end
         end
-
-        if(a.AUTOWIRE ~= nil) then
-            -- TODO create list which you transform into string
-        end
-
     end
 
-    -- TODO split variables into the macro groups
-    if (self.macros["AUTOWIRE"] ~= nil) then
-        local vers_defs_packed = { range={}, lines={} }
-
-        if next(vars_merged) ~= nil then
-            table.insert(vars_merged, 1, "// Beginning of automatic reg inputs (for undeclared instantiated-module inputs)")
-            table.insert(vars_merged, #vars_merged+1, "// End of automatics")
+    -- create the var definitions
+    for n, c in pairs(vars_merged_new) do
+        local test_merged = { range={}, lines={} }
+        if (self.macros[n] ~= nil) then
+            table.insert(test_merged.lines, 1, "// Beginning of automatic reg inputs (for undeclared instantiated-module inputs)")
+            table.insert(test_merged.lines, 1, string.format("/*%s*/", n))
+            for k, l in pairs(c) do
+                local var_stamp = string.format("%s %s; // From %s of %s",
+                l.datatype, k, l.name, l.filename)
+                table.insert(test_merged.lines, var_stamp)
+            end
+            table.insert(test_merged.lines, #test_merged.lines+1, "// End of automatics")
+            test_merged.range = self.macros[n]
+            table.insert(merged, #merged+1, test_merged)
         end
-
-        vers_defs_packed.lines = vars_merged
-        table.insert(vers_defs_packed.lines, 1, "/*AUTOWIRE*/")
-        vers_defs_packed.range = self.macros["AUTOWIRE"]
-
-        -- add the vars to the merged table
-        table.insert(merged, #merged+1, vers_defs_packed)
     end
 
     return merged
-
-    --[[ return {
-        {
-            range={ 14, 0, 21, 24 },
-            lines={
-                "// Beginning of automatic reg inputs (for undeclared instantiated-module inputs)",
-                "logic [31:0] signal1; // To instance_name of module_name.sv",
-                "logic [31:0] signal2; // To instance_name of module_name.sv",
-                "logic signal3; // To instance_name1 of module_name1.sv",
-                "// End of automatics"
-            }
-        },
-        {
-            range={ 41, 10, 41, 10 },
-            lines={
-                ",",
-                "// Inputs",
-                ".signal1(signal1[31:0]), // *Implicit",
-                "// Output",
-                ".signal2(signal2[31:0]), // *Implicit",
-                ""
-            }
-        },
-        {
-            range={ 36, 31, 36, 31 },
-            lines={
-                "",
-                ".TEST1(TEST1),",
-                ".TEST2(TEST2)"
-            }
-        }
-    } ]]
 end
 
 function M:get_raw_module()
