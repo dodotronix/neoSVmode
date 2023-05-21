@@ -121,24 +121,30 @@ function I:get_lsp_position(line, indent)
     return {character=self.indent + indent, line=self.line + line}
 end
 
-function I:get_unfolded_range()
+function I:get_unfolded_range(line)
     local root = self.instance_tree:root()
     local unfolded_query = vim.treesitter.query.parse("verilog",
-    [[ (module_or_generate_item) @module 
-       ((named_port_connection) @asterisk (#eq? @asterisk "\.\*")) ]])
-    local range
+    [[  ((named_port_connection) @asterisk (#eq? @asterisk "\.\*")) 
+    (module_or_generate_item) @module ]])
+    local range, group
 
-    for _, n in unfolded_query:iter_captures(root, self.str_content) do
-        local group = unfolded_query.captures[i]
+    for i, n in unfolded_query:iter_captures(root, self.str_content) do
+        group = unfolded_query.captures[i]
         local r  = { n:range() }
+        -- TODO offset is not correctly added 
         if (group == "asterisk") then
-            range[1] = r[1]
+            range[1] = r[1] + self.line + line - 1
             range[2] = r[2]
         else
             range = r
+            range[3] = r[3] + self.line + line - 1
+            range[4] = r[4]
         end
     end
-    return { range=range, lines={} }
+    if group == "asterisk" then
+        return { range=range, lines={".*);"} }
+    end
+    return nil
 end
 
 function I:get_name()

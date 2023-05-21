@@ -153,7 +153,7 @@ end
 function M:get_unfolded_range()
     local merged = {}
     for _, m in ipairs(self.instances) do
-        local definitions = m:get_unfolded_range()
+        local definitions = m:get_unfolded_range(self.line)
 
         if (definitions ~= nil) then
             table.insert(merged, #merged+1, definitions)
