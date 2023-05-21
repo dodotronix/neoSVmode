@@ -64,11 +64,24 @@ function H:find_definitions()
         }
     end
 
+
     local parse_definition = function (content)
         local res = {}
         local trees = LanguageTree.new(content, 'verilog', {})
         trees = trees:parse()
         if #trees > 0 then
+
+            -- TODO parsers
+            local param_check_type_query = [[ 
+            (module_nonansi_header)@nonansi
+            (module_ansi_header) @ansi ]]
+
+            local port_nonansi_query = [[
+            (input_declaration) @port_nonansi 
+            (output_declaration) @port_nonansi
+            (inout_declaration) @port_nonansi
+            ]]
+
             local param_query = [[
             (parameter_declaration (data_type_or_implicit1) @datatype
             (list_of_param_assignments (_ (parameter_identifier) @name
@@ -89,13 +102,23 @@ function H:find_definitions()
             (port_identifier) @name) @iface
             ]]
 
-            -- TODO nonansi definitions parser
-            local nonansi_port = [[ (module_nonansi_header) @test ]]
-
+            -- decide what is the module definition standard
             local parsers = {}
-            parsers.param = vim.treesitter.query.parse("verilog", param_query)
-            parsers.port = vim.treesitter.query.parse("verilog", port_query)
-            parsers.iface = vim.treesitter.query.parse("verilog", interface_query)
+            local check_type_parser = vim.treesitter.query.parse("verilog", param_check_type_query)
+            for i, _ in check_type_parser:iter_captures(trees[1]:root(), content) do
+                local group = check_type_parser.captures[i]
+                if group == "nonansi" then
+                    -- NOTE parsing of the interfaces is not implemented
+                    parsers.param = vim.treesitter.query.parse("verilog", param_query)
+                    parsers.port = vim.treesitter.query.parse("verilog", port_nonansi_query)
+                elseif group == "ansi" then
+                    parsers.param = vim.treesitter.query.parse("verilog", param_query)
+                    parsers.port = vim.treesitter.query.parse("verilog", port_query)
+                    parsers.iface = vim.treesitter.query.parse("verilog", interface_query)
+                else
+                    return
+                end
+            end
 
             for name, p in pairs(parsers) do
                 local tmp = {}
@@ -106,6 +129,22 @@ function H:find_definitions()
                     -- parsed values from the TS query
                     if parsers[group] ~= nil then
                         table.insert(tmp, 1, {})
+                    elseif group == "port_nonansi" then
+                        local t = {}
+                        local txt = ts_query.get_node_text(n, content)
+                        for k in string.gmatch(txt, "([%w_:%[%]%d]+)") do
+                            table.insert(t, #t+1, k)
+                        end
+                        local datatype = "logic"
+                        local id = t[2]
+                        if t[3] ~= nil then
+                            id = t[3]
+                            datatype = datatype .. " " .. t[2]
+                        end
+                        table.insert(tmp, 1, {})
+                        tmp[1].direction = t[1]
+                        tmp[1].datatype = datatype
+                        tmp[1].name = id
                     else
                         tmp[1][group] = ts_query.get_node_text(n, content)
                     end
@@ -122,6 +161,8 @@ function H:find_definitions()
                 res[name] = parsed
             end
         end
+        P(res)
+        -- print(string.format("", self.name))
         return res
     end
 
