@@ -192,7 +192,6 @@ function H:find_definitions()
                     local group = def_query.captures[a]
                     if group == "module" then
                         local module_definition = ts_query.get_node_text(n, file_content)
-                        P(module_definition)
                         self.unique_ids[i] = parse_definition(module_definition)
                         -- P(self.unique_ids[i])
                     end
