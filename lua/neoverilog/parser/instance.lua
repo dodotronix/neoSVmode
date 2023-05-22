@@ -8,7 +8,7 @@ function I:new(instance_tree, str_content, name, line, indent)
                str_content = str_content,
                indent = indent,
                line = line,
-               align = 0,
+               align = -1,
                name = name,
                iname = "",
                asterisk = {},
@@ -63,9 +63,12 @@ function I:get_ports()
         if group == "line" then
             table.insert(tmp, 1, {})
             local range = {n:range()}
-            self.align = range[1]
+            self.align = range[2]
         elseif group == "asterisk" then
             self.asterisk = { n:range() }
+            if self.align < 0 then
+                self.align = self.asterisk[2]
+            end
         else
             tmp[1][group] = txt
         end
@@ -165,7 +168,7 @@ function I:parse_instance_name()
 end
 
 function I:align_port_assignment(indent, id, ending)
-    local indent = string.rep(" ", indent+self.indent+self.align+1)
+    local indent = string.rep(" ", self.align)
     return string.format("%s.%s(%s)%s // *Implicit", indent, id, id, ending)
 end
 
@@ -188,6 +191,7 @@ function I:get_macro_contents(list_of_definitions, line, indent)
     -- build stamp for the 
     for id, content in pairs(def_portmap.port) do
         if self.port_assignments[id] == nil then
+            -- Ending should not be always used
             local def_stamp = self:align_port_assignment(indent, id, ",")
             local var_stamp = string.format("%s %s;", content.datatype, id)
 
