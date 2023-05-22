@@ -142,7 +142,7 @@ function I:get_unfolded_range(line)
         end
     end
     if group == "asterisk" then
-        return { range=range, lines={".*);"} }
+        return { range=range, lines={""} }
     end
     return nil
 end

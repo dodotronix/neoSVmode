@@ -161,8 +161,6 @@ function H:find_definitions()
                 res[name] = parsed
             end
         end
-        P(res)
-        -- print(string.format("", self.name))
         return res
     end
 
@@ -183,7 +181,10 @@ function H:find_definitions()
             local trees = LanguageTree.new(file_content, 'verilog', {})
             trees = trees:parse()
             if #trees > 0 then
-                local pattern = "(module_declaration (module_header) @m (#match? @m module " .. i  .. ")) @module"
+                -- NOTE be careful the the module pattern has to be enclosed
+                -- in the brackets
+                local mmatch = string.format("%q", "module " .. i)
+                local pattern = string.format("(module_declaration (module_header) @m (#match? @m %s)) @module", mmatch)
 
                 local def_query = vim.treesitter.query.parse("verilog", pattern)
 
@@ -191,7 +192,9 @@ function H:find_definitions()
                     local group = def_query.captures[a]
                     if group == "module" then
                         local module_definition = ts_query.get_node_text(n, file_content)
+                        P(module_definition)
                         self.unique_ids[i] = parse_definition(module_definition)
+                        -- P(self.unique_ids[i])
                     end
                 end
             end
