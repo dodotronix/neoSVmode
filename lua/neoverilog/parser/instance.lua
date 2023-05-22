@@ -208,6 +208,7 @@ function I:get_macro_contents(list_of_definitions, line, indent)
         end
     end
 
+
     -- merge all lists together and create names for the groups
     local merge_test = {","}
     for i, content in pairs(sorted) do
@@ -216,8 +217,10 @@ function I:get_macro_contents(list_of_definitions, line, indent)
         table.insert(merge_test, #merge_test+1, delimiter)
         table.move(content, 1, #content, #merge_test + 1, merge_test)
     end
-    ports.lines = merge_test
+    -- remove the comma on the last line of port map
+    merge_test[#merge_test] = string.gsub(merge_test[#merge_test], ",", "")
 
+    ports.lines = merge_test
     -- add new line at the end of the 
     -- portmap and align closing bracket
     local bracket_indent = string.rep(" ", self.indent)
