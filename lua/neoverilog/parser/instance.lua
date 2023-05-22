@@ -184,30 +184,42 @@ function I:get_macro_contents(list_of_definitions, line, indent)
     end
 
     local ports = {range={}, lines={","}}
-    local var_defs = {}
     local definitions = {}
-    local test = {}
+    local vardefs = {}
+    local sorted = {}
 
-    -- build stamp for the 
+    -- creating a portmap stamp
     for id, content in pairs(def_portmap.port) do
         if self.port_assignments[id] == nil then
             -- Ending should not be always used
             local def_stamp = self:align_port_assignment(indent, id, ",")
-            local var_stamp = string.format("%s %s;", content.datatype, id)
 
-            test[content.direction] = test[content.direction] or {}
+            vardefs[content.direction] = vardefs[content.direction] or {}
 
             -- TODO add name of the file to the instance
-            test[content.direction][id] = {datatype=content.datatype,
+            vardefs[content.direction][id] = {datatype=content.datatype,
             filename=self.name}
 
-            -- TODO check correct groupping of the variables AUTOWIRE  
-            table.insert(ports.lines, def_stamp)
-            table.insert(var_defs, var_stamp)
+            -- grouping the ports according to the direction
+            if(sorted[content.direction] == nil) then
+                sorted[content.direction] = {}
+            end
+            table.insert(sorted[content.direction], def_stamp)
         end
     end
 
-    -- add new line at the end of the portmap
+    -- merge all lists together and create names for the groups
+    local merge_test = {","}
+    for i, content in pairs(sorted) do
+        local space = string.rep(" ", self.align)
+        local delimiter = string.format("%s// %ss", space, i)
+        table.insert(merge_test, #merge_test+1, delimiter)
+        table.move(content, 1, #content, #merge_test + 1, merge_test)
+    end
+    ports.lines = merge_test
+
+    -- add new line at the end of the 
+    -- portmap and align closing bracket
     local bracket_indent = string.rep(" ", self.indent)
     table.insert(ports.lines, bracket_indent)
 
@@ -220,7 +232,7 @@ function I:get_macro_contents(list_of_definitions, line, indent)
         definitions = {ports}
     end
 
-    return definitions, var_defs, test
+    return definitions, vardefs
 end
 
 -- TODO add settings file where you could specify paths to 

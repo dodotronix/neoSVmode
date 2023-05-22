@@ -93,7 +93,7 @@ function M:get_macro_contents(list_of_definitions, file_names)
     local vars_merged_new = {}
 
     for _, m in ipairs(self.instances) do
-        local definitions, var_defs, a = m:get_macro_contents(list_of_definitions, self.line, self.indent)
+        local definitions, var_defs = m:get_macro_contents(list_of_definitions, self.line, self.indent)
 
         if (definitions ~= nil) then
             table.move(definitions, 1, #definitions, #merged + 1, merged)
@@ -104,12 +104,12 @@ function M:get_macro_contents(list_of_definitions, file_names)
         end
 
         -- merge the definitions of variables together
-        if a ~= nil then
-            for i in pairs(a) do
+        if var_defs ~= nil then
+            for i in pairs(var_defs) do
                 if vars_merged_new[i] == nil then
-                    vars_merged_new[i] = a[i]
+                    vars_merged_new[i] = var_defs[i]
                 end
-                for k, c in pairs(a[i]) do
+                for k, c in pairs(var_defs[i]) do
                     -- TODO add get_instance_name to the instance class
                     vars_merged_new[i][k] = vars_merged_new[i][k] or c
                     if vars_merged_new[i][k].name == nil then
