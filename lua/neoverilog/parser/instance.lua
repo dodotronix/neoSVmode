@@ -208,7 +208,8 @@ function I:get_macro_contents(list_of_definitions, line, indent)
     end
 
     -- add new line at the end of the portmap
-    table.insert(ports.lines, "")
+    local bracket_indent = string.rep(" ", self.indent)
+    table.insert(ports.lines, bracket_indent)
 
     if next(self.asterisk) ~= nil then
         ports.range = {
