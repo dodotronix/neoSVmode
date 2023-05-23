@@ -72,7 +72,6 @@ function I:get_ports()
         else
             tmp[1][group] = txt
         end
-
     end
 
     -- create dictionary for easier management
@@ -183,12 +182,13 @@ function I:get_macro_contents(list_of_definitions, line, indent)
         return
     end
 
-    local ports = {range={}, lines={","}}
+    local ports = {range={}, lines={}}
     local definitions = {}
     local vardefs = {}
     local sorted = {}
 
     -- creating a portmap stamp
+    -- TODO portassignment won't work if the def_portmap.port is empty
     for id, content in pairs(def_portmap.port) do
         if self.port_assignments[id] == nil then
             -- Ending should not be always used
@@ -208,6 +208,16 @@ function I:get_macro_contents(list_of_definitions, line, indent)
         end
     end
 
+    if def_portmap.iface ~= nil then
+        for id, content in pairs(def_portmap.iface) do
+            if self.port_assignments[id] == nil then
+                print(id)
+                P(content)
+                -- local iface_stamp = self:align_iface_assignment(indent, id, )
+                -- table.insert(sorted[content.direction], iface_stamp)
+            end
+        end
+    end
 
     -- merge all lists together and create names for the groups
     local merge_test = {","}
