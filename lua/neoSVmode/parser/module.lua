@@ -1,4 +1,4 @@
-local Instance = require("neoverilog.parser.instance")
+local Instance = require("neoSVmode.parser.instance")
 local LanguageTree = require('vim.treesitter.languagetree')
 local ts_query = vim.treesitter
 

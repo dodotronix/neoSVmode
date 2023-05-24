@@ -1,12 +1,11 @@
 local api = vim.api
 local ts_query = vim.treesitter
-local Module = require("neoverilog.parser.module")
+local Module = require("neoSVmode.parser.module")
 local util = require('vim.lsp.util')
 local LanguageTree = require('vim.treesitter.languagetree')
 
 -- TODO maybe add a memoization module to store all the found paths 
 -- and store the values in /tmp/ under unique number for a certain branch
--- local finder = require('neoverilog.finder')
 
 local H = {}
 

@@ -13,7 +13,7 @@
 -- TODO first find all the instances in the current file
 --
 
-local hierarchy = require('neoverilog.parser.hierarchy')
+local hierarchy = require('neoSVmode.parser.hierarchy')
 local api = vim.api
 local command = api.nvim_create_user_command
 
