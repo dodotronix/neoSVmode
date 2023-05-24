@@ -166,9 +166,18 @@ function I:parse_instance_name()
     end
 end
 
-function I:align_port_assignment(indent, id, ending)
+function I:align_iface_assignment(id, modport)
     local indent = string.rep(" ", self.align)
-    return string.format("%s.%s(%s)%s // *Implicit", indent, id, id, ending)
+    local port_def = string.format("%s.%s(%s.%s),", indent, id, id, modport) 
+    -- TODO the indent is static for now, it's gonna be part of the setup
+    return string.format("%-40s // *Implicit", port_def)
+end
+
+function I:align_port_assignment(id)
+    local indent = string.rep(" ", self.align)
+    local port_def = string.format("%s.%s(%s),", indent, id, id)
+    -- TODO the indent is static for now, it's gonna be part of the setup
+    return string.format("%-40s // *Implicit", port_def)
 end
 
 function I:get_macro_contents(list_of_definitions, line, indent)
@@ -192,7 +201,7 @@ function I:get_macro_contents(list_of_definitions, line, indent)
     for id, content in pairs(def_portmap.port) do
         if self.port_assignments[id] == nil then
             -- Ending should not be always used
-            local def_stamp = self:align_port_assignment(indent, id, ",")
+            local def_stamp = self:align_port_assignment(id)
 
             vardefs[content.direction] = vardefs[content.direction] or {}
 
@@ -211,10 +220,11 @@ function I:get_macro_contents(list_of_definitions, line, indent)
     if def_portmap.iface ~= nil then
         for id, content in pairs(def_portmap.iface) do
             if self.port_assignments[id] == nil then
-                print(id)
-                P(content)
-                -- local iface_stamp = self:align_iface_assignment(indent, id, )
-                -- table.insert(sorted[content.direction], iface_stamp)
+                local iface_stamp = self:align_iface_assignment(id, content.modport)
+                if(sorted.interface == nil) then
+                    sorted.interface = {}
+                end
+                table.insert(sorted.interface, iface_stamp)
             end
         end
     end
@@ -228,7 +238,7 @@ function I:get_macro_contents(list_of_definitions, line, indent)
         table.move(content, 1, #content, #merge_test + 1, merge_test)
     end
     -- remove the comma on the last line of port map
-    merge_test[#merge_test] = string.gsub(merge_test[#merge_test], ",", "")
+    merge_test[#merge_test] = string.gsub(merge_test[#merge_test], ",", " ")
 
     ports.lines = merge_test
     -- add new line at the end of the 

@@ -137,8 +137,9 @@ function M:get_macro_contents(list_of_definitions, file_names)
             table.insert(test_merged.lines, 1, s)
             table.insert(test_merged.lines, 1, string.format("/*%s*/", macro))
             for k, l in pairs(c) do
-                local var_stamp = string.format("%s%s %s; // %s %s of %s",
-                align, l.datatype, k, dir_string, l.name, file_names[l.filename])
+                local var_def = string.format("%s%s %s;", align, l.datatype, k)
+                local var_stamp = string.format("%-40s // %s %s of %s", var_def,
+                dir_string, l.name, file_names[l.filename])
                 table.insert(test_merged.lines, var_stamp)
             end
             table.insert(test_merged.lines, #test_merged.lines+1, align .. "// End of automatics")
