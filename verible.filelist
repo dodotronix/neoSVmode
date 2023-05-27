@@ -1,0 +1,5 @@
+./tests/multi_module_nonansi_ansi.sv
+./tests/UnfoldTest.sv
+./tests/io_simple_module_ansi.sv
+./tests/interface_module_ansi.sv
+./tests/param_module.sv
