@@ -3,10 +3,11 @@ local ts_query = vim.treesitter
 
 I = {}
 
-function I:new(instance_tree, str_content, name, line, indent)
+function I:new(instance_tree, str_content, name, line, indent, extra_space)
     local d = {instance_tree = instance_tree,
                str_content = str_content,
                indent = indent,
+               extra_space = extra_space,
                line = line,
                align = -1,
                name = name,
@@ -32,8 +33,20 @@ function I.from_str_content(str_content, line, indent)
     local name = string.match(str_content, "[%w_]+")
     -- IMPORTANT there is an issue with treesitter that it doesn't recognize 
     -- module without the parameter brackets #(), therefore we have to inject
-    -- it to instances which don't have that
-    local ext_content = string.gsub(str_content, "([%w_]+)%s+([%w_]+.*)", "%1 #() %2")
+    -- it to instances which don't have that and set the extra_space variable
+    -- to 4, because we add 4 characters so we can subtract it from the ranges
+    local ext_content, n = string.gsub(str_content, "([%w_]+)%s+([%w_]+.*)", "%1 #() %2")
+
+    -- if the asterisk symbol is on the same line as the added #()
+    -- we need to subtract extra sapaces from the ranges returned
+    -- by the treesitter in later processing
+    local first_line = string.match(str_content, "[^\n]+")
+    local asterisk_symbol = string.match(first_line, "%.%*")
+
+    local extra_space =  0
+    if (n > 0) and (asterisk_symbol ~= nil ) then
+        extra_space = 4
+    end
 
     -- this is very important, if the parsed instance is placed inside a dummy 
     -- module, we can use the treesitter to parse the vars and identifiers 
@@ -42,7 +55,7 @@ function I.from_str_content(str_content, line, indent)
     local trees = LanguageTree.new(w_content, 'verilog', {})
     trees = trees:parse()
     if #trees > 0 then
-        return I:new(trees[1],  w_content, name, line, indent)
+        return I:new(trees[1],  w_content, name, line, indent, extra_space)
     end
     return nil
 end
@@ -63,9 +76,11 @@ function I:get_ports()
         if group == "line" then
             table.insert(tmp, 1, {})
             local range = {n:range()}
-            self.align = range[2]
+            self.align = range[2] - self.extra_space
         elseif group == "asterisk" then
             self.asterisk = { n:range() }
+            self.asterisk[2] = self.asterisk[2] - self.extra_space
+            self.asterisk[4] = self.asterisk[4] - self.extra_space
             if self.align < 0 then
                 self.align = self.asterisk[2]
             end
@@ -136,7 +151,7 @@ function I:get_unfolded_range(line)
         -- TODO offset is not correctly added 
         if (group == "asterisk") then
             range[1] = r[1] + self.line + line - 1
-            range[2] = r[2]
+            range[2] = r[2] - self.extra_space
         else
             range = r
             range[3] = r[3] + self.line + line - 1
@@ -144,6 +159,7 @@ function I:get_unfolded_range(line)
         end
     end
     if group == "asterisk" then
+        P(range)
         return { range=range, lines={".*);"} }
     end
     return nil
