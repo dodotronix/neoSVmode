@@ -219,23 +219,25 @@ function I:get_macro_contents(list_of_definitions, line, indent)
     local sorted = {}
 
     -- creating a portmap stamp
-    -- TODO portassignment won't work if the def_portmap.port is empty
-    for id, content in pairs(def_portmap.port) do
-        if self.port_assignments[id] == nil then
-            -- Ending should not be always used
-            local def_stamp = self:align_port_assignment(id)
+    -- P(def_portmap)
+    if def_portmap.port ~= nil then
+        for id, content in pairs(def_portmap.port) do
+            if self.port_assignments[id] == nil then
+                -- Ending should not be always used
+                local def_stamp = self:align_port_assignment(id)
 
-            vardefs[content.direction] = vardefs[content.direction] or {}
+                vardefs[content.direction] = vardefs[content.direction] or {}
 
-            -- TODO add name of the file to the instance
-            vardefs[content.direction][id] = {datatype=content.datatype,
-            filename=self.name}
+                -- TODO add name of the file to the instance
+                vardefs[content.direction][id] = {datatype=content.datatype,
+                filename=self.name}
 
-            -- grouping the ports according to the direction
-            if(sorted[content.direction] == nil) then
-                sorted[content.direction] = {}
+                -- grouping the ports according to the direction
+                if(sorted[content.direction] == nil) then
+                    sorted[content.direction] = {}
+                end
+                table.insert(sorted[content.direction], def_stamp)
             end
-            table.insert(sorted[content.direction], def_stamp)
         end
     end
 
