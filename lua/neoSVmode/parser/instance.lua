@@ -148,17 +148,21 @@ function I:get_unfolded_range(line)
     for i, n in unfolded_query:iter_captures(root, self.str_content) do
         group = unfolded_query.captures[i]
         local r  = { n:range() }
-        -- TODO offset is not correctly added 
         if (group == "asterisk") then
             range[1] = r[1] + self.line + line - 1
             range[2] = r[2] - self.extra_space
         else
             range = r
-            range[3] = r[3] + self.line + line - 1
-            -- there is one corner case when the
+            -- There is one corner case when the
             -- closing bracket is at the same line
-            -- as the asterisk
-            range[4] = r[4] - self.extra_space
+            -- as the asterisk.
+            -- This can happen when the unfold
+            -- method is called on the folded
+            -- module or module with no ports.
+            if range[1] == range[3] then
+                range[4] = r[4] - self.extra_space
+            end
+            range[3] = r[3] + self.line + line - 1
         end
     end
     if group == "asterisk" then
