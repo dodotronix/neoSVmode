@@ -166,7 +166,6 @@ function I:get_unfolded_range(line)
         end
     end
     if group == "asterisk" then
-        P(range)
         return { range=range, lines={".*);"} }
     end
     return nil
