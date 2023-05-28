@@ -85,13 +85,14 @@ function H:find_definitions()
             (parameter_declaration (data_type_or_implicit1) @datatype
             (list_of_param_assignments (_ (parameter_identifier) @name
             (constant_param_expression) @value))) @param
-           ]]
+            ]]
 
             local port_query = [[
-            ((ansi_port_declaration ( variable_port_header 
+            ((ansi_port_declaration (_ 
             (port_direction) @direction
-            (data_type) @datatype)
-            (port_identifier) @name)) @port
+            (data_type)? @datatype
+            (net_port_type1)? @datatype)
+            (port_identifier) @name) @port)
             ]]
 
             local interface_query = [[
@@ -128,12 +129,15 @@ function H:find_definitions()
                     -- parsed values from the TS query
                     if parsers[group] ~= nil then
                         table.insert(tmp, 1, {})
+                        -- tmp[1].direction = ts_query.get_node_text(n, content) 
                     elseif group == "port_nonansi" then
                         local t = {}
                         local txt = ts_query.get_node_text(n, content)
                         for k in string.gmatch(txt, "([%w_:%[%]%d]+)") do
                             table.insert(t, #t+1, k)
                         end
+                        -- if the datatype is not specified
+                        -- in the module we use the logic
                         local datatype = "logic"
                         local id = t[2]
                         if t[4] ~= nil then
@@ -141,8 +145,11 @@ function H:find_definitions()
                             datatype = t[2] .. " " .. t[3]
                         elseif t[3] ~= nil then
                             id = t[3]
-                            if t[2] ~= datatype then
+                            local is_vector = string.match(t[2], "%[%d*:%d*%]")
+                            if is_vector ~= nil then
                                 datatype = datatype .. " " .. t[2]
+                            else
+                                datatype = t[2]
                             end
                         end
 
