@@ -30,7 +30,6 @@ module module_nonansi_2 #(parameter int VARIABLE=10)(
 
 endmodule
 
-
 module module_ansi #(parameter int PARAM=21)(
     input logic clk,
     input logic rst,
