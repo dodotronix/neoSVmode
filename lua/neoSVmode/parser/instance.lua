@@ -155,14 +155,10 @@ function I:get_unfolded_range(line)
         else
             range = r
             range[3] = r[3] + self.line + line - 1
-            range[4] = r[4]
-
             -- there is one corner case when the
             -- closing bracket is at the same line
             -- as the asterisk
-            if range[1] == r[3] then
-                range[4] = r[4] - self.extra_space
-            end
+            range[4] = r[4] - self.extra_space
         end
     end
     if group == "asterisk" then
