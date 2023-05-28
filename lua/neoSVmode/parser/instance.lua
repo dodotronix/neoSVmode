@@ -42,6 +42,7 @@ function I.from_str_content(str_content, line, indent)
     -- by the treesitter in later processing
     local first_line = string.match(str_content, "[^\n]+")
     local asterisk_symbol = string.match(first_line, "%.%*")
+    print(asterisk_symbol)
 
     local extra_space =  0
     if (n > 0) and (asterisk_symbol ~= nil ) then
@@ -156,6 +157,13 @@ function I:get_unfolded_range(line)
             range = r
             range[3] = r[3] + self.line + line - 1
             range[4] = r[4]
+
+            -- there is one corner case when the
+            -- closing bracket is at the same line
+            -- as the asterisk
+            if range[1] == r[3] then
+                range[4] = r[4] - self.extra_space
+            end
         end
     end
     if group == "asterisk" then
