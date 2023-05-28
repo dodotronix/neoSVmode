@@ -126,7 +126,11 @@ function M:get_macro_contents(list_of_definitions, file_names)
     -- create the var definitions
     for n, c in pairs(vars_merged_new) do
         local test_merged = { range={}, lines={} }
-        local macro = ((n == "input") and "AUTOREGINPUT") or "AUTOWIRE"
+        -- NOTE assign the macro name to the ports 
+        -- according to their directions
+        local macro = (((n == "input") and "AUTOREGINPUT")
+        or ((n == "inout") and "AUTOREGINOUT") or "AUTOWIRE")
+
         local dir_string = ((n == "input") and "To") or "From"
         local label = ((n == "input") and "regs")  or "wires"
 
