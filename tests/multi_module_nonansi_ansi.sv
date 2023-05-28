@@ -1,6 +1,6 @@
 
 // this is a top module
-module module_nonansi #(parameter int VARIABLE=50)(
+module module_nonansi_1 #(parameter int VARIABLE=50)(
     rst,
     clk,
     port_a,
@@ -10,6 +10,21 @@ module module_nonansi #(parameter int VARIABLE=50)(
     input logic clk;
     input logic [7:0] port_a;
     output logic port_b;
+
+    // body of the nonansi module
+
+endmodule
+
+module module_nonansi_2 #(parameter int VARIABLE=10)(
+    rst,
+    clk,
+    port_c,
+    port_d);
+
+    input rst;
+    input clk;
+    input [7:0] port_c;
+    output port_d;
 
     // body of the nonansi module
 
