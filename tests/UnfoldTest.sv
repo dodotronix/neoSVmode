@@ -1,29 +1,24 @@
 
-module UnfoldTest #()
-(input logic haha);
+module UnfoldTest (input logic ctrl,
+                   output logic [31:0] res,
+                   input logic manual_rst);
 
 /*AUTOWIRE*/
-// Beginning of automatic wires outputs (for undeclared instantiated-module outputs)
-logic res2;                              // From i_simple_module_ansi of io_simple_module_ansi.sv
-logic fdbk;                              // From i_simple_module_ansi of io_simple_module_ansi.sv
-logic res1;                              // From i_simple_module_ansi of io_simple_module_ansi.sv
-// End of automatics
+
+/*AUTOREGINOUT*/
 
 /*AUTOREGINPUT*/
-// Beginning of automatic regs inputs (for undeclared instantiated-module inputs)
-logic clk;                               // To i_simple_module_ansi of io_simple_module_ansi.sv
-logic en;                                // To i_simple_module_ansi of io_simple_module_ansi.sv
-logic [7:0] data;                        // To i_simple_module_ansi of io_simple_module_ansi.sv
-logic rst;                               // To i_simple_module_ansi of io_simple_module_ansi.sv
-// End of automatics
 
+interface_module_ansi i_iface_module(.*);
 
-// interface_module_ansi i_iface_module(.*);
+io_simple_module_ansi i_simple_module_ansi(
+    .res2(ahoj),
+    .*);
 
-io_simple_module_ansi i_simple_module_ansi(.*);
+module_nonansi_2 i_nonansi_2_m (.*);
 
-// module_nonansi i_nonansi_m (.*);
+module_nonansi_1 i_nonansi_1_m (.*);
 
-// module_ansi i_nonansi_m (.*);
+module_ansi i_ansi_m (.*);
 
 endmodule
