@@ -136,10 +136,16 @@ function H:find_definitions()
                         end
                         local datatype = "logic"
                         local id = t[2]
-                        if t[3] ~= nil then
+                        if t[4] ~= nil then
+                            id = t[4]
+                            datatype = t[2] .. " " .. t[3]
+                        elseif t[3] ~= nil then
                             id = t[3]
-                            datatype = datatype .. " " .. t[2]
+                            if t[2] ~= datatype then
+                                datatype = datatype .. " " .. t[2]
+                            end
                         end
+
                         table.insert(tmp, 1, {})
                         tmp[1].direction = t[1]
                         tmp[1].datatype = datatype
