@@ -42,7 +42,6 @@ function I.from_str_content(str_content, line, indent)
     -- by the treesitter in later processing
     local first_line = string.match(str_content, "[^\n]+")
     local asterisk_symbol = string.match(first_line, "%.%*")
-    print(asterisk_symbol)
 
     local extra_space =  0
     if (n > 0) and (asterisk_symbol ~= nil ) then
