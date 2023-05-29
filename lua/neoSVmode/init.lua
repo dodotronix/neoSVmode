@@ -1,16 +1,9 @@
 --
--- TODO test if interfaces are added to portmaps
 -- TODO add missing variables definitions 
--- TODO load it as git package to nvim
--- TODO rewrite the code to be better organized
--- TODO check for the library definitions
---
 -- TODO add configuration file to set: indent, extra libraries ...
 -- TODO notifie the user, that not all stars were unfolded
 -- TODO attache the fold and unfold functions to key shortcuts
 -- TODO read setup table and upload the setings
---
--- TODO first find all the instances in the current file
 --
 
 local hierarchy = require('neoSVmode.parser.hierarchy')
@@ -35,7 +28,7 @@ M.fold = function ()
     end
 end
 
-command('Fold', M.fold, {})
-command('Unfold', M.unfold, {})
+command('SVmodeFold', M.fold, {})
+command('SVmodeUnfold', M.unfold, {})
 
 return M
