@@ -1,4 +1,4 @@
-# Neoverilog
+# Neo-SystemVerilog-mode (neoSVmode) 
 
 Unfold portmaps and generated required variables in SV. 
 
