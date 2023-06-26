@@ -36,6 +36,7 @@ function I.from_str_content(str_content, line, indent)
     -- it to instances which don't have that and set the extra_space variable
     -- to 4, because we add 4 characters so we can subtract it from the ranges
     local ext_content, n = string.gsub(str_content, "([%w_]+)%s+([%w_]+.*)", "%1 #() %2")
+    -- TODO the exth_content does not have the correct indent
 
     -- if the asterisk symbol is on the same line as the added #()
     -- we need to subtract extra sapaces from the ranges returned
