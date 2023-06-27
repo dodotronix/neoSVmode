@@ -71,6 +71,7 @@ function I:get_ports()
                     ((named_port_connection) @asterisk 
                     (#eq? @asterisk "\.\*"))
                 ]])
+
     for i, n in ports_query:iter_captures(root, self.str_content) do
         local txt = ts_query.get_node_text(n, self.str_content)
         local group = ports_query.captures[i]
@@ -82,6 +83,16 @@ function I:get_ports()
             self.asterisk = { n:range() }
             self.asterisk[2] = self.asterisk[2] - self.extra_space
             self.asterisk[4] = self.asterisk[4] - self.extra_space
+
+            -- check if the asterisk is on the same line as the declaration
+            -- the instance is alone in the module body, so if the asterisk
+            -- is on the same line as the module declaration the line number
+            -- has to be higher then 1
+            if self.asterisk[1] < 2 then
+                self.asterisk[2] = self.asterisk[2] + self.indent
+                self.asterisk[4] = self.asterisk[4] + self.indent
+            end
+
             if self.align < 0 then
                 self.align = self.asterisk[2]
             end
@@ -152,6 +163,9 @@ function I:get_unfolded_range(line)
         if (group == "asterisk") then
             range[1] = r[1] + self.line + line - 1
             range[2] = r[2] - self.extra_space
+            if r[1] < 2 then
+                range[2] = range[2] + self.indent
+            end
         else
             range = r
             -- There is one corner case when the
@@ -161,7 +175,7 @@ function I:get_unfolded_range(line)
             -- method is called on the folded
             -- module or module with no ports.
             if range[1] == range[3] then
-                range[4] = r[4] - self.extra_space
+                range[4] = r[4] - self.extra_space + self.indent
             end
             range[3] = r[3] + self.line + line - 1
         end
